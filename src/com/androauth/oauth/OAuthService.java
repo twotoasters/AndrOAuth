@@ -11,6 +11,9 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import com.androauth.api.OAuth10Api;
 import com.androauth.api.OAuth20Api;
+import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
+import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
+
 import android.util.Base64;
 
 /**
@@ -35,31 +38,26 @@ public class OAuthService {
 	public static final String POST = "POST";
 	public static final Pattern TOKEN_REGEX = Pattern.compile("oauth_token=([^&]+)");
     public static final Pattern SECRET_REGEX = Pattern.compile("oauth_token_secret=([^&]*)");
-    public static final Pattern ACCESS_TOKEN_REGEX = Pattern.compile("\"access_token\": \"([^\"]*)\"");
+    public static final Pattern ACCESS_TOKEN_REGEX = Pattern.compile("\"access_token\":\"(( ([^\"]*))|(([^\"]*)))\"");
     public static final Pattern CODE_REGEX = Pattern.compile("code=([^&]*)");
     
-	private String apiKey;
-	private String apiSecret;
+	private static String apiKey;
+	private static String apiSecret;
 	private String apiCallback;
 	private String apiVersion;
 	private String scope;
+	private Token token;
 
-
-	/**
-	   * An interface for access token callbacks
-	   *
-	   */
-	public interface OAuthAccessTokenCallback{
-		public void onOAuthAccessTokenReceived(Token token);
-	}
-	
 	/**
 	   * Constructs a new OAuthService for apis using OAuth 1.0
 	   *
 	   * @param oAuth10Api an api class that implements the oauth10api interface
 	   */
-	public static OAuth10Service newInstance(OAuth10Api oAuth10Api){
-		return new OAuth10Service(oAuth10Api);		
+	public static OAuth10Service newInstance(OAuth10Api oAuth10Api, String apiConsumerKey, String apiConsumerSecret, OAuth10ServiceCallback oAuthCallback){
+		apiKey = apiConsumerKey;
+		apiSecret = apiConsumerSecret;
+		
+		return new OAuth10Service(oAuth10Api, oAuthCallback);		
 	}
 	
 	/**
@@ -67,10 +65,13 @@ public class OAuthService {
 	   *
 	   * @param oAuth20Api an api class that implements the oauth20api interface
 	   */
-	public static OAuth20Service newInstance(OAuth20Api oAuth20Api){
-		return new OAuth20Service(oAuth20Api);
+	public static OAuth20Service newInstance(OAuth20Api oAuth20Api, String apiConsumerKey, String apiConsumerSecret, OAuth20ServiceCallback oAuthCallback){
+		apiKey = apiConsumerKey;
+		apiSecret = apiConsumerSecret;
+		
+		return new OAuth20Service(oAuth20Api, oAuthCallback);
 	}
-	
+
 	/**
 	   * Gets the api key of the app 
 	   * 
@@ -81,30 +82,12 @@ public class OAuthService {
 	}
 
 	/**
-	   * Sets the api key of the app (provided by api)
-	   * 
-	   * @param apiKey the public key given to the user when registering and application
-	   */
-	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
-	}
-
-	/**
 	   * Gets the api secret of the app 
 	   * 
 	   * @return the api secret
 	   */
 	public String getApiSecret() {
 		return apiSecret;
-	}
-
-	/**
-	   * Sets the api secret of the app (provided by the api)
-	   * 
-	   * @param apiSecret the secret key given to the user when registering an application 
-	   */
-	public void setApiSecret(String apiSecret) {
-		this.apiSecret = apiSecret;
 	}
 
 	/**
@@ -157,6 +140,23 @@ public class OAuthService {
 	public void setScope(String scope) {
 		this.scope = scope;
 	}
+	
+	/**
+	 * Gets the oauth token
+	 * @return the token
+	 */
+	public Token getToken() {
+		return token;
+	}
+
+	/**
+	 * Sets the oauth token
+	 * @param token
+	 */
+	public void setToken(Token token) {
+		this.token = token;
+	}
+	
 	/**
 	   * Generates an HMAC signature given a base string and key
 	   * 

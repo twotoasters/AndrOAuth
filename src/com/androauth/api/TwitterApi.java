@@ -7,7 +7,7 @@ package com.androauth.api;
  */
 public class TwitterApi implements OAuth10Api{
 
-	public static final String AUTHORIZE_URL = "https://api.twitter.com/oauth/authorize?oauth_token=%s";
+	public static final String AUTHORIZE_URL = "https://api.twitter.com/oauth/authorize";
 	private static final String REQUEST_TOKEN_RESOURCE = "https://api.twitter.com/oauth/request_token";
 	private static final String ACCESS_TOKEN_RESOURCE = "https://api.twitter.com/oauth/access_token";
 	private static final String OAUTH_VERSION = "1.0";

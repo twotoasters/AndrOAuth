@@ -6,6 +6,8 @@ import java.util.Properties;
 
 import android.util.Log;
 
+import com.androauth.api.OAuth10Api;
+import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
 import com.twotoasters.android.hoot.HootResult;
@@ -18,16 +20,13 @@ import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
  */
 public class OAuthRequest {
 
-	private String requestUrl;
-	private Map<String, String> queryParams;
+	protected static String requestUrl;
+	private Map<String, String> requestParams;
 	private Map<String, String> headersMap;
-	private String token;
-	private Token oAuth1token;
-	private OAuth10Service oAuthService;
 	private static final String AUTHORIZATION = "Authorization";
-	private static final String BEARER = "Bearer ";
-	private static final String POST = "POST";
-	private static final String GET = "GET";
+	protected static final String BEARER = "Bearer ";
+	protected static final String POST = "POST";
+	protected static final String GET = "GET";
 
 	/**
 	 * An interface for notifying the caller when the hoot request completes
@@ -38,30 +37,26 @@ public class OAuthRequest {
 	}
 	
 	/**
-	   * Constructs an OAuthRequest object
-	   *
-	   * @param requestUrl the url to execute the request on
-	   */
-	public OAuthRequest(String requestUrl) {
-		this.requestUrl = requestUrl;
+	 * Creates a new OAuth10Request 
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param token an object containing the access_token and user_secret
+	 * @param service an instance of OAuth10Service with key and secret set
+	 * @return a new OAuth10Request
+	 */
+	public static OAuth10Request newInstance(String oAuthRequestUrl, Token token, OAuth10Service service){
+		requestUrl = oAuthRequestUrl;
+		return new OAuth10Request(token, service);	
 	}
-
+	
 	/**
-	   * Sets the queryParams for the request
-	   *
-	   * @param queryParams the queryParams for either a Post or Get
-	   */
-	public void setParams(Map<String, String> queryParams) {
-		this.queryParams = queryParams;
-	}
-
-	/**
-	   * Sets the access token used for the request
-	   *
-	   * @param token the oauth access token used to access protected resources
-	   */
-	public void setToken(String token) {
-		this.token = token;
+	 * Creates a new OAuth20Request
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param token a string containing the access_token
+	 * @return a new OAuth20Request
+	 */
+	public static OAuth20Request newInstance(String oAuthRequestUrl, String token){
+		requestUrl = oAuthRequestUrl;
+		return new OAuth20Request(token);
 	}
 
 	/**
@@ -72,23 +67,21 @@ public class OAuthRequest {
 	public void setHeaders(Map<String, String> headersMap) {
 		this.headersMap = headersMap;
 	}
-	
-	public OAuth10Service getoAuthService() {
-		return oAuthService;
+
+	/**
+	 * Gets request parameters for either post or get
+	 * @return request parameters
+	 */
+	public Map<String, String> getRequestParams() {
+		return requestParams;
 	}
 
-	public void setoAuthService(OAuth10Service oAuthService) {
-		this.oAuthService = oAuthService;
-	}
-	
-	
-	
-	public Token getoAuth1token() {
-		return oAuth1token;
-	}
-
-	public void setoAuth1token(Token oAuth1token) {
-		this.oAuth1token = oAuth1token;
+	/**
+	 * Sets request parameters for either post or get
+	 * @param requestParams
+	 */
+	public void setRequestParams(Map<String, String> requestParams) {
+		this.requestParams = requestParams;
 	}
 
 	/**
@@ -96,8 +89,8 @@ public class OAuthRequest {
 	   *
 	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
 	   */
-	public void get(OnRequestCompleteListener onRequestCompleteListener) {
-		HootRequest request = execute(onRequestCompleteListener, GET);
+	public void get(OnRequestCompleteListener onRequestCompleteListener, String authHeader) {
+		HootRequest request = execute(onRequestCompleteListener, GET, authHeader);
 		request.get().execute();
 	}
 
@@ -106,10 +99,10 @@ public class OAuthRequest {
 	   *
 	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
 	   */
-	public void post(OnRequestCompleteListener onRequestCompleteListener) {
-		HootRequest request = execute(onRequestCompleteListener, POST);
-		if(queryParams != null) {
-			request.post(queryParams).execute();
+	public void post(OnRequestCompleteListener onRequestCompleteListener, String authHeader) {
+		HootRequest request = execute(onRequestCompleteListener, POST, authHeader);
+		if(getRequestParams() != null) {
+			request.post(getRequestParams()).execute();
 		} else {
 			request.post().execute();
 		}
@@ -124,37 +117,23 @@ public class OAuthRequest {
 	   * 
 	   * @return a HootRequest instance
 	   */
-	private HootRequest execute(final OnRequestCompleteListener onRequestCompleteListener, String method) {
+	private HootRequest execute(final OnRequestCompleteListener onRequestCompleteListener, String method, String authHeader) {
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(requestUrl);
 
 		HootRequest request = hoot.createRequest();
 		request.setStreamingMode(HootRequest.STREAMING_MODE_FIXED);
 
 		Properties headers = new Properties();
-		String authHeader = null;
-		if(getoAuthService()==null){
-			//OAuth 2.0 call
-			authHeader = BEARER + token;
-		}else{
-			//OAuth 1.0 call
-			try {
-				authHeader = getoAuthService().signOAuthRequest(getoAuth1token(), requestUrl, method, queryParams);
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 		headers.setProperty(AUTHORIZATION, authHeader);
 		
-
 		if(headersMap != null) {
 			for(Map.Entry<String, String> entry : headersMap.entrySet()) {
 				headers.setProperty(entry.getKey(), entry.getValue());
 			}
 		}
 		request.setHeaders(headers);
-		if(method.equals(GET) && queryParams != null) {
-			request.setQueryParameters(queryParams);
+		if(method.equals(GET) && getRequestParams() != null) {
+			request.setQueryParameters(getRequestParams());
 		}
 
 		request.bindListener(new HootRequestListener() {

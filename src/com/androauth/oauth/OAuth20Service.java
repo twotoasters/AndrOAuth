@@ -24,14 +24,25 @@ public class OAuth20Service extends OAuthService {
 	private static final String RESPONSE_TYPE = "response_type";
 	private static final String CLIENT_ID = "client_id";
 	private static final String STATE = "state";
+	
+	private OAuth20ServiceCallback oAuthCallback;
 
+	/**
+	 * an interface to notify the caller when the access_token has been received
+	 *
+	 */
+	public interface OAuth20ServiceCallback{
+		public void onOAuthAccessTokenReceived(String token);
+	}
+	
 	/**
 	 * Constructs a new OAuth20Service
 	 * 
 	 * @param oAuth20Api
 	 *            a class that implements OAuth20Api
 	 */
-	public OAuth20Service(OAuth20Api oAuth20Api) {
+	public OAuth20Service(OAuth20Api oAuth20Api, OAuth20ServiceCallback oAuth20ServiceCallback) {
+		oAuthCallback = oAuth20ServiceCallback;
 		api = oAuth20Api;
 	}
 
@@ -45,7 +56,7 @@ public class OAuth20Service extends OAuthService {
 	 * @param oAuthAccessTokenCallback
 	 *            interface used to notify when access token is received
 	 */
-	public void getOAuthAccessToken(String url, final OAuthAccessTokenCallback oAuthAccessTokenCallback) {
+	public void getOAuthAccessToken(String url) {
 		String code = extract(url, CODE_REGEX);
 
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource());
@@ -63,9 +74,8 @@ public class OAuth20Service extends OAuthService {
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
 				String extracted = extract(result.getResponseString(), ACCESS_TOKEN_REGEX);
-				Token token = new Token();
-				token.setAccess_token(extracted);
-				oAuthAccessTokenCallback.onOAuthAccessTokenReceived(token);
+				Log.v("into","the extraction: "+result.getResponseString());
+				oAuthCallback.onOAuthAccessTokenReceived(extracted);
 			}
 
 			@Override
@@ -104,8 +114,10 @@ public class OAuth20Service extends OAuthService {
 		String url = null;
 
 		url = api.getAuthorizeUrl();
-		url += "?" + RESPONSE_TYPE + "=" + CODE + "&" + CLIENT_ID + "=" + getApiKey() + "&" + REDIRECT_URI + "=" + percentEncode(getApiCallback()) + "&"
-				+ STATE + "=" + "blah";
+		url += "?" + RESPONSE_TYPE + "=" + CODE + "&" + CLIENT_ID + "=" + getApiKey() + "&" + STATE + "=" + "blah";
+		if(getApiCallback() != null){
+			url += "&" + REDIRECT_URI + "=" + percentEncode(getApiCallback()); 
+		}
 		if(getScope() != null) {
 			url += "&" + "scope=" + getScope();
 		}

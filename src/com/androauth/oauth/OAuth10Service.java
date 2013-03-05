@@ -21,16 +21,20 @@ import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
  * @author pfives
  */
 public class OAuth10Service extends OAuthService {
-	OAuth10Api api;
-	public static final String AUTHORIZATION = "Authorization";
-
+	
 	/**
-	 * An interface for request token callbacks
-	 * 
+	 * An interface for notifying the caller when a request_token or access_token has been received 
+	 *
 	 */
-	public interface OAuthRequestTokenCallback {
-		public void onOAuthRequestTokenReceived(Token token);
+	public interface OAuth10ServiceCallback{
+		public void onOAuthRequestTokenReceived();
+		public void onOAuthAccessTokenReceived(Token token);
 	}
+	
+	private OAuth10Api api;
+	private OAuth10ServiceCallback oAuthCallback;
+	
+	public static final String AUTHORIZATION = "Authorization";
 
 	/**
 	 * Constructs a new OAuth10Service
@@ -38,7 +42,8 @@ public class OAuth10Service extends OAuthService {
 	 * @param oAuth10Api
 	 *            a class that implements OAuth10Api
 	 */
-	public OAuth10Service(OAuth10Api oAuth10Api) {
+	public OAuth10Service(OAuth10Api oAuth10Api, OAuth10ServiceCallback oAuth10Callback) {
+		oAuthCallback = oAuth10Callback;
 		api = oAuth10Api;
 	}
 
@@ -181,18 +186,18 @@ public class OAuth10Service extends OAuthService {
 	 * @param oAuthAccessTokenCallback
 	 *            interface used to notify when access token is received
 	 */
-	public void getOAuthAccessToken(Token token, String url, final OAuthAccessTokenCallback oAuthAccessTokenCallback) {
+	public void getOAuthAccessToken(String url) {
 
 		Uri uri = Uri.parse(url);
 		String verifier = uri.getQueryParameter("oauth_verifier").trim();
 
 		Map<String, String> headersMap = new TreeMap<String, String>();
 
-		headersMap.put(OAUTH_TOKEN, token.getAccess_token());
+		headersMap.put(OAUTH_TOKEN, getToken().getAccess_token());
 		headersMap.put(OAUTH_VERIFIER, verifier);
 
 		setApiCallback(null);
-		String header = buildOAuthHeader("POST", api.getAccessTokenResource(), headersMap, token.getUser_secret());
+		String header = buildOAuthHeader("POST", api.getAccessTokenResource(), headersMap, getToken().getUser_secret());
 
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
@@ -206,7 +211,7 @@ public class OAuth10Service extends OAuthService {
 			public void onSuccess(HootRequest request, HootResult result) {
 				accessToken.setAccess_token(extract(result.getResponseString(), TOKEN_REGEX));
 				accessToken.setUser_secret(extract(result.getResponseString(), SECRET_REGEX));
-				oAuthAccessTokenCallback.onOAuthAccessTokenReceived(accessToken);
+				oAuthCallback.onOAuthAccessTokenReceived(accessToken);
 			}
 
 			@Override
@@ -234,12 +239,37 @@ public class OAuth10Service extends OAuthService {
 	}
 
 	/**
+	 * Constructs an authorize url which appends the oauth_token and oauth_callback AND any additional parameters passed in to the authorize url defined in the api class
+	 * @param additionalAuthorizeParams
+	 * @return
+	 */
+	public String getAuthorizeUrl(Map<String,String>additionalAuthorizeParams){
+		String url = getAuthorizeUrl();
+		for(Map.Entry<String, String> entry : additionalAuthorizeParams.entrySet()){
+			url+="&";
+			url+=entry.getKey() + "=" + percentEncode(entry.getValue());
+		}
+		return url;
+	}
+	
+	/**
+	 * Constructs an authorize url which appends the oauth_token and oauth_callback to the authorize url defined in the api class
+	 * @return authorize url with parameters
+	 */
+	public String getAuthorizeUrl(){
+		String url = api.getAuthorizeUrl();
+		url += "?oauth_token="+getToken().getAccess_token();
+		url += "&oauth_callback="+percentEncode(getApiCallback());
+		return url;
+	}
+	
+	/**
 	 * Gets a request token from the api (first step OAuth 1.0)
 	 * 
 	 * @param oAuthAccessTokenCallback
 	 *            interface used to notify when requeset token is received
 	 */
-	public void getOAuthRequestToken(final OAuthRequestTokenCallback oAuthRequestTokenCallback) {
+	public void getOAuthRequestToken() {
 
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getRequestTokenResource());
 		String header = buildOAuthHeader(POST, api.getRequestTokenResource(), null, null);
@@ -256,8 +286,8 @@ public class OAuth10Service extends OAuthService {
 				Token token = new Token();
 				token.setAccess_token(extract(result.getResponseString(), TOKEN_REGEX));
 				token.setUser_secret(extract(result.getResponseString(), SECRET_REGEX));
-
-				oAuthRequestTokenCallback.onOAuthRequestTokenReceived(token);
+				setToken(token);
+				oAuthCallback.onOAuthRequestTokenReceived();
 
 			}
 
@@ -279,4 +309,12 @@ public class OAuth10Service extends OAuthService {
 		});
 		oAuthRequest.post().execute();
 	}
+	
+	/**
+	 * Starts the OAuth10 handshake by requesting a request token
+	 */
+	public void start(){
+		getOAuthRequestToken();
+	}
+	
 }
