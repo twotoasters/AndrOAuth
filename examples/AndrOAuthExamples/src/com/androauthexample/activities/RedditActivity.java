@@ -4,15 +4,15 @@ import java.util.Properties;
 
 import com.androauth.api.RedditApi;
 import com.androauth.api.TwitterApi;
+import com.androauth.oauth.OAuth20Request;
 import com.androauth.oauth.OAuth20Service;
 import com.androauth.oauth.OAuthRequest;
 import com.androauth.oauth.OAuthRequest.OnRequestCompleteListener;
 import com.androauth.oauth.OAuthService;
 import com.androauth.oauth.Token;
-import com.androauth.oauth.OAuthService.OAuthAccessTokenCallback;
 import com.twotoasters.androauthexample.R;
 import com.twotoasters.android.hoot.HootResult;
-
+import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,16 +46,22 @@ public class RedditActivity extends Activity{
 	}
 
 	private void startAuthentication(){
-		service = OAuthService.newInstance(new RedditApi());
+		service = OAuthService.newInstance(new RedditApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
+			
+			@Override
+			public void onOAuthAccessTokenReceived(String token) {
+				//save that shit
+				
+				getCaptcha(token);
+				//getInfo(token.getAccess_token());
+			}
+		});
 		service.setApiCallback(CALLBACK);
-		service.setApiKey(APIKEY);
-		service.setApiSecret(APISECRET);
 		service.setScope("identity");
 		getUserVerification();	
 	}
 	
 	private void getUserVerification(){
-		
 		
 		final WebView webview = (WebView) findViewById(R.id.webview);
 		webview.getSettings().setJavaScriptEnabled(true);
@@ -66,17 +72,9 @@ public class RedditActivity extends Activity{
 
 				// Checking for our successful callback
 				if(url.startsWith(CALLBACK)) {
-					webview.setVisibility(View.GONE);
-					service.getOAuthAccessToken(url, new OAuthAccessTokenCallback() {
-						
-						@Override
-						public void onOAuthAccessTokenReceived(Token token) {
-							//save that shit
-							Log.v("into","main success: "+token.getAccess_token()+" -- "+token.getUser_secret());
-							getCaptcha(token.getAccess_token());
-							//getInfo(token.getAccess_token());
-						}
-					});		
+					webview.setVisibility(View.GONE);					
+					service.getOAuthAccessToken(url);
+
 				}
 				return super.shouldOverrideUrlLoading(view, url);
 			}
@@ -88,8 +86,7 @@ public class RedditActivity extends Activity{
 	
 	private void getCaptcha(String token){
 		
-		OAuthRequest request = new OAuthRequest("https://oauth.reddit.com/api/new_captcha");
-		request.setToken(token);
+		OAuth20Request request = OAuthRequest.newInstance("https://oauth.reddit.com/api/new_captcha", token);
 		
 		request.post(new OnRequestCompleteListener() {
 			
@@ -105,24 +102,24 @@ public class RedditActivity extends Activity{
 		});
 	}
 	
-	private void getInfo(String token){
-		
-		OAuthRequest request = new OAuthRequest("https://oauth.reddit.com/api/v1/me");
-		request.setToken(token);
-		
-		request.get(new OnRequestCompleteListener() {
-			
-			@Override
-			public void onSuccess(HootResult result) {
-				Log.v("into","finalsuccess: "+result.getResponseString());
-			}
-			
-			@Override
-			public void onFailure() {
-				Log.v("into","failure");	
-			}
-		});
-	}
+//	private void getInfo(String token){
+//		
+//		OAuthRequest request = new OAuthRequest("https://oauth.reddit.com/api/v1/me");
+//		request.setToken(token);
+//		
+//		request.get(new OnRequestCompleteListener() {
+//			
+//			@Override
+//			public void onSuccess(HootResult result) {
+//				Log.v("into","finalsuccess: "+result.getResponseString());
+//			}
+//			
+//			@Override
+//			public void onFailure() {
+//				Log.v("into","failure");	
+//			}
+//		});
+//	}
 
 	
 	

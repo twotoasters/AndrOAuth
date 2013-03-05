@@ -6,15 +6,14 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.androauth.api.TwitterApi;
+import com.androauth.oauth.OAuth10Request;
 import com.androauth.oauth.OAuth10Service;
-import com.androauth.oauth.OAuth10Service.OAuthRequestTokenCallback;
+import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
+import com.androauth.oauth.OAuthRequest;
+import com.androauth.oauth.OAuthRequest.OnRequestCompleteListener;
 import com.androauth.oauth.OAuthService;
 import com.androauth.oauth.Token;
-import com.androauth.oauth.OAuthService.OAuthAccessTokenCallback;
 import com.twotoasters.androauthexample.R;
-import com.twotoasters.android.hoot.Hoot;
-import com.twotoasters.android.hoot.HootRequest;
-import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
 import com.twotoasters.android.hoot.HootResult;
 
 import android.app.Activity;
@@ -50,22 +49,24 @@ public class MainActivity extends Activity {
 	}
 	
 	private void startOAuth(){
-		service = OAuthService.newInstance(new TwitterApi());
-		service.setApiCallback(CALLBACK);
-		service.setApiKey(APIKEY);
-		service.setApiSecret(APISECRET);
-		service.getOAuthRequestToken(new OAuthRequestTokenCallback() {
+		service = OAuthService.newInstance(new TwitterApi(), APIKEY, APISECRET, new OAuth10ServiceCallback() {
 			
 			@Override
-			public void onOAuthRequestTokenReceived(Token token) {
-				getUserAuthorization(token);
+			public void onOAuthRequestTokenReceived() {
+				getUserAuthorization();
+			}
+			
+			@Override
+			public void onOAuthAccessTokenReceived(Token token) {
+				updateStatus(token);
 			}
 		});
+		service.setApiCallback(CALLBACK);
+		service.start();
 		
 	}
 	
-	private void getUserAuthorization(final Token token){
-		String authUrl = String.format(TwitterApi.AUTHORIZE_URL,token.getAccess_token());
+	private void getUserAuthorization(){
 		
 		final WebView webview = (WebView) findViewById(R.id.webview);
 		webview.getSettings().setJavaScriptEnabled(true);
@@ -77,100 +78,89 @@ public class MainActivity extends Activity {
 				// Checking for our successful callback
 				if(url.startsWith(CALLBACK)) {
 					webview.setVisibility(View.GONE);
-					service.getOAuthAccessToken(token, url, new OAuthAccessTokenCallback() {
-						
-						@Override
-						public void onOAuthAccessTokenReceived(Token token) {
-							//save that shit
-							Log.v("into","main success: "+token.getAccess_token()+" -- "+token.getUser_secret());
-							updateStatus(token);
-						}
-
-						
-					});		
+					service.getOAuthAccessToken(url);
 				}
 				return super.shouldOverrideUrlLoading(view, url);
 			}
 
 		});
 		
-		webview.loadUrl(authUrl);
+		webview.loadUrl(service.getAuthorizeUrl());
 	}
 	
 	public void updateStatus(Token token){
 		
 		
-//		String baseUrl = "https://api.twitter.com/1/statuses/update.json";
-//		OAuthRequest request = new OAuthRequest(baseUrl);
-//		request.setoAuth1token(token);
-//		Map<String,String> queryParameters = new HashMap<String,String>();
-//		queryParameters.put("status", "spider man could be a ghost");
-//		
-//		request.setParams(queryParameters);
-//		
-//		request.post(new OnRequestCompleteListener() {
-//			
-//			@Override
-//			public void onSuccess(HootResult result) {
-//				Log.v("into","super succcess: "+result.getResponseString());
-//			}
-//			
-//			@Override
-//			public void onFailure() {
-//				Log.v("into","on failure ");
-//				
-//			}
-//		});
-		
-		Map<String,String> queryParameters = new HashMap<String,String>();
 		String baseUrl = "https://api.twitter.com/1/statuses/update.json";
-		String httpMethod = "POST";
-		queryParameters.put("status", "super masdfgdfgbatman");
-		String auth = null;
-		try {
-			auth = service.signOAuthRequest(token, baseUrl, httpMethod, queryParameters);
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		OAuth10Request request = OAuthRequest.newInstance(baseUrl, token, service);
+		Map<String,String> queryParameters = new HashMap<String,String>();
+		queryParameters.put("status", "thor reads books");
 		
-		HootRequest request = Hoot.createInstanceWithBaseUrl(baseUrl).createRequest();
-		Properties headers = new Properties();
-		headers.setProperty("Authorization", auth);
-		request.setHeaders(headers);
-		request.bindListener(new HootRequestListener() {
+		request.setRequestParams(queryParameters);
+		
+		request.post(new OnRequestCompleteListener() {
 			
 			@Override
-			public void onSuccess(HootRequest arg0, HootResult arg1) {
-				Log.v("into","sarxess "+arg1.getResponseString());
+			public void onSuccess(HootResult result) {
+				Log.v("into","super succcess: "+result.getResponseString());
 			}
 			
 			@Override
-			public void onRequestStarted(HootRequest arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void onRequestCompleted(HootRequest arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void onFailure(HootRequest arg0, HootResult arg1) {
-				Log.v("into","on failure: ");
-			}
-			
-			@Override
-			public void onCancelled(HootRequest arg0) {
-				// TODO Auto-generated method stub
+			public void onFailure() {
+				Log.v("into","on failure ");
 				
 			}
 		});
 		
-		request.post(queryParameters).execute();
-		
+//		Map<String,String> queryParameters = new HashMap<String,String>();
+//		String baseUrl = "https://api.twitter.com/1/statuses/update.json";
+//		String httpMethod = "POST";
+//		queryParameters.put("status", "super masdfgdfgbatman");
+//		String auth = null;
+//		try {
+//			auth = service.signOAuthRequest(token, baseUrl, httpMethod, queryParameters);
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		
+//		HootRequest request = Hoot.createInstanceWithBaseUrl(baseUrl).createRequest();
+//		Properties headers = new Properties();
+//		headers.setProperty("Authorization", auth);
+//		request.setHeaders(headers);
+//		request.bindListener(new HootRequestListener() {
+//			
+//			@Override
+//			public void onSuccess(HootRequest arg0, HootResult arg1) {
+//				Log.v("into","sarxess "+arg1.getResponseString());
+//			}
+//			
+//			@Override
+//			public void onRequestStarted(HootRequest arg0) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//			
+//			@Override
+//			public void onRequestCompleted(HootRequest arg0) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//			
+//			@Override
+//			public void onFailure(HootRequest arg0, HootResult arg1) {
+//				Log.v("into","on failure: ");
+//			}
+//			
+//			@Override
+//			public void onCancelled(HootRequest arg0) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
+//		
+//		request.post(queryParameters).execute();
+//		
 	}
 
 }

@@ -14,7 +14,7 @@ import com.androauth.api.RedditApi;
 import com.androauth.oauth.OAuth20Service;
 import com.androauth.oauth.OAuthService;
 import com.androauth.oauth.Token;
-import com.androauth.oauth.OAuthService.OAuthAccessTokenCallback;
+import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
 import com.twotoasters.androauthexample.R;
 
 public class ImgurActivity extends Activity {
@@ -40,20 +40,21 @@ public class ImgurActivity extends Activity {
 		});
 	}
 
-	
-	
+
 	private void startAuthentication(){
-		service = OAuthService.newInstance(new ImgurApi());
+		service = OAuthService.newInstance(new ImgurApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
+			
+			@Override
+			public void onOAuthAccessTokenReceived(String token) {
+				Log.v("into","main success: "+token);
+			}
+		});
 		service.setApiCallback(CALLBACK);
-		service.setApiKey(APIKEY);
-		service.setApiSecret(APISECRET);
-		//service.setScope("identity");
 		getUserVerification();	
 	}
 
 	
-private void getUserVerification(){
-		
+	private void getUserVerification(){
 		
 		final WebView webview = (WebView) findViewById(R.id.webview);
 		webview.getSettings().setJavaScriptEnabled(true);
@@ -65,16 +66,7 @@ private void getUserVerification(){
 				// Checking for our successful callback
 				if(url.startsWith(CALLBACK)) {
 					webview.setVisibility(View.GONE);
-					service.getOAuthAccessToken(url, new OAuthAccessTokenCallback() {
-						
-						@Override
-						public void onOAuthAccessTokenReceived(Token token) {
-							//save that shit
-							Log.v("into","main success: "+token.getAccess_token()+" -- "+token.getUser_secret());
-							//getCaptcha(token.getAccess_token());
-							//getInfo(token.getAccess_token());
-						}
-					});		
+					service.getOAuthAccessToken(url);
 				}
 				return super.shouldOverrideUrlLoading(view, url);
 			}
