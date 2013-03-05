@@ -1,4 +1,4 @@
 AndrOAuth
 =========
 
-An Android library for OAuth
+OAuth library for Android
