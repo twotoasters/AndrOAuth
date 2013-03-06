@@ -105,9 +105,9 @@ public class OAuth10Service extends OAuthService {
 			headersMap.put(OAUTH_CALLBACK, OAuthUtils.percentEncode(getApiCallback()));
 		}
 		headersMap.put(OAUTH_CONSUMER_KEY, getApiKey());
-		headersMap.put(OAUTH_NONCE, String.valueOf(millis + new Random().nextInt()));
+		headersMap.put(OAUTH_NONCE, String.valueOf((millis*1000) + new Random().nextInt()));
 		headersMap.put(OAUTH_SIGNATURE_METHOD, METHOD);
-		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(millis / 1000));
+		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(millis));
 		headersMap.put(OAUTH_VERSION, api.getOauthVersion());
 		headersMap.put(OAUTH_SIGNATURE, createSignature(headersMap, secret, httpMethod, url));
 
@@ -130,8 +130,6 @@ public class OAuth10Service extends OAuthService {
 	 * @throws UnsupportedEncodingException
 	 */
 	private String createSignature(Map<String, String> headersMap, String userSecret, String methodType, String baseUrl){
-
-		
 
 		StringBuilder parameterString = new StringBuilder();
 		
@@ -162,7 +160,6 @@ public class OAuth10Service extends OAuthService {
 	   * @return the signature used in the oauth header
 	   */
 	public String createHMACSignature(String baseString, String signingKey) {
-		
 		SecretKeySpec key = null;
 		try {
 			key = new SecretKeySpec(signingKey.getBytes(UTF8), HMAC_SHA1);
@@ -242,7 +239,7 @@ public class OAuth10Service extends OAuthService {
 
 		setApiCallback(null);
 		String header = buildOAuthHeader(POST, api.getAccessTokenResource(), headersMap, getToken().getUser_secret());
-
+		
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
 
@@ -313,10 +310,8 @@ public class OAuth10Service extends OAuthService {
 	 *            interface used to notify when requeset token is received
 	 */
 	public void getOAuthRequestToken() {
-
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getRequestTokenResource());
 		String header = buildOAuthHeader(POST, api.getRequestTokenResource(), null, null);
-
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
 
