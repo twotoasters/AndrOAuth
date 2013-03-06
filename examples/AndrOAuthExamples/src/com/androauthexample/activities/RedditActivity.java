@@ -1,15 +1,12 @@
 package com.androauthexample.activities;
 
-import java.util.Properties;
-
 import com.androauth.api.RedditApi;
-import com.androauth.api.TwitterApi;
 import com.androauth.oauth.OAuth20Request;
 import com.androauth.oauth.OAuth20Service;
+import com.androauth.oauth.OAuth20Token;
 import com.androauth.oauth.OAuthRequest;
 import com.androauth.oauth.OAuthRequest.OnRequestCompleteListener;
 import com.androauth.oauth.OAuthService;
-import com.androauth.oauth.Token;
 import com.twotoasters.androauthexample.R;
 import com.twotoasters.android.hoot.HootResult;
 import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
@@ -49,11 +46,8 @@ public class RedditActivity extends Activity{
 		service = OAuthService.newInstance(new RedditApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
 			
 			@Override
-			public void onOAuthAccessTokenReceived(String token) {
-				//save that shit
-				
+			public void onOAuthAccessTokenReceived(OAuth20Token token) {
 				getCaptcha(token);
-				//getInfo(token.getAccess_token());
 			}
 		});
 		service.setApiCallback(CALLBACK);
@@ -84,7 +78,7 @@ public class RedditActivity extends Activity{
 		webview.loadUrl(service.getAuthorizeUrl());
 	}
 	
-	private void getCaptcha(String token){
+	private void getCaptcha(OAuth20Token token){
 		
 		OAuth20Request request = OAuthRequest.newInstance("https://oauth.reddit.com/api/new_captcha", token);
 		

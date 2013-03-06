@@ -32,7 +32,7 @@ public class OAuth20Service extends OAuthService {
 	 *
 	 */
 	public interface OAuth20ServiceCallback{
-		public void onOAuthAccessTokenReceived(String token);
+		public void onOAuthAccessTokenReceived(OAuth20Token token);
 	}
 	
 	/**
@@ -57,7 +57,7 @@ public class OAuth20Service extends OAuthService {
 	 *            interface used to notify when access token is received
 	 */
 	public void getOAuthAccessToken(String url) {
-		String code = extract(url, CODE_REGEX);
+		String code = OAuthUtils.extract(url, CODE_REGEX);
 
 		/*HootRequest request = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource())
 				.setBasicAuth(getApiKey(), getApiSecret())
@@ -76,9 +76,11 @@ public class OAuth20Service extends OAuthService {
 
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
-				String extracted = extract(result.getResponseString(), ACCESS_TOKEN_REGEX);
+				String accessToken = OAuthUtils.extract(result.getResponseString(), ACCESS_TOKEN_REGEX);
+				String refreshToken = OAuthUtils.extract(result.getResponseString(), REFRESH_TOKEN_REGEX);
+				OAuth20Token token = new OAuth20Token(accessToken, refreshToken);
 				Log.v("into","the extraction: "+result.getResponseString());
-				oAuthCallback.onOAuthAccessTokenReceived(extracted);
+				oAuthCallback.onOAuthAccessTokenReceived(token);
 			}
 
 			@Override
@@ -119,7 +121,7 @@ public class OAuth20Service extends OAuthService {
 			.append("&").append(STATE).append("=").append("blah");
 		
 		if(getApiCallback() != null){
-			sb.append("&").append(REDIRECT_URI).append("=").append(percentEncode(getApiCallback()));
+			sb.append("&").append(REDIRECT_URI).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
 		}
 		
 		if(getScope() != null) {

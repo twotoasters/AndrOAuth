@@ -10,10 +10,9 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 
 import com.androauth.api.ImgurApi;
-import com.androauth.api.RedditApi;
 import com.androauth.oauth.OAuth20Service;
+import com.androauth.oauth.OAuth20Token;
 import com.androauth.oauth.OAuthService;
-import com.androauth.oauth.Token;
 import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
 import com.twotoasters.androauthexample.R;
 
@@ -45,8 +44,8 @@ public class ImgurActivity extends Activity {
 		service = OAuthService.newInstance(new ImgurApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
 			
 			@Override
-			public void onOAuthAccessTokenReceived(String token) {
-				Log.v("into","main success: "+token);
+			public void onOAuthAccessTokenReceived(OAuth20Token token) {
+				Log.v("into","main success: "+token.getAccessToken());
 			}
 		});
 		service.setApiCallback(CALLBACK);

@@ -1,13 +1,8 @@
 package com.androauth.oauth;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Properties;
 
-import android.util.Log;
-
-import com.androauth.api.OAuth10Api;
-import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
 import com.twotoasters.android.hoot.HootResult;
@@ -43,7 +38,7 @@ public class OAuthRequest {
 	 * @param service an instance of OAuth10Service with key and secret set
 	 * @return a new OAuth10Request
 	 */
-	public static OAuth10Request newInstance(String oAuthRequestUrl, Token token, OAuth10Service service){
+	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service){
 		requestUrl = oAuthRequestUrl;
 		return new OAuth10Request(token, service);	
 	}
@@ -54,9 +49,9 @@ public class OAuthRequest {
 	 * @param token a string containing the access_token
 	 * @return a new OAuth20Request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, String token){
+	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token){
 		requestUrl = oAuthRequestUrl;
-		return new OAuth20Request(token);
+		return new OAuth20Request(token.getAccessToken());
 	}
 
 	/**
@@ -153,7 +148,6 @@ public class OAuthRequest {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
-				Log.v("into","res fail: "+result.getResponseString());
 				onRequestCompleteListener.onFailure();
 			}
 

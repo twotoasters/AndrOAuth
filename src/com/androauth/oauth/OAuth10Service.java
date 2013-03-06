@@ -7,8 +7,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.TreeMap;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import android.net.Uri;
+import android.util.Base64;
+
 import com.androauth.api.OAuth10Api;
+import com.androauth.exceptions.OAuthEncodingException;
+import com.androauth.exceptions.OAuthKeyException;
+import com.androauth.exceptions.OAuthSignatureException;
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
 import com.twotoasters.android.hoot.HootResult;
@@ -28,13 +37,15 @@ public class OAuth10Service extends OAuthService {
 	 */
 	public interface OAuth10ServiceCallback{
 		public void onOAuthRequestTokenReceived();
-		public void onOAuthAccessTokenReceived(Token token);
+		public void onOAuthAccessTokenReceived(OAuth10Token token);
 	}
 	
 	private OAuth10Api api;
 	private OAuth10ServiceCallback oAuthCallback;
 	
 	public static final String AUTHORIZATION = "Authorization";
+	public static final String OAUTH_ = "OAuth ";
+	public static final String OAUTH_VERIFIER = "oauth_verifier";
 
 	/**
 	 * Constructs a new OAuth10Service
@@ -66,7 +77,7 @@ public class OAuth10Service extends OAuthService {
 		Map<String, String> headersMap = buildAuthorizationHeaderMap(headers, httpMethod, url, userSecret);
 
 		boolean appendEntry = false;
-		StringBuilder sb = new StringBuilder("OAuth ");
+		StringBuilder sb = new StringBuilder(OAUTH_);
 		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
 			if (appendEntry) {
 				sb.append(", ");
@@ -91,19 +102,14 @@ public class OAuth10Service extends OAuthService {
 		long millis = System.currentTimeMillis() / 1000;
 
 		if(getApiCallback() != null) {
-			headersMap.put(OAUTH_CALLBACK, percentEncode(getApiCallback()));
+			headersMap.put(OAUTH_CALLBACK, OAuthUtils.percentEncode(getApiCallback()));
 		}
 		headersMap.put(OAUTH_CONSUMER_KEY, getApiKey());
 		headersMap.put(OAUTH_NONCE, String.valueOf(millis + new Random().nextInt()));
 		headersMap.put(OAUTH_SIGNATURE_METHOD, METHOD);
 		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(millis / 1000));
 		headersMap.put(OAUTH_VERSION, api.getOauthVersion());
-		
-		try {
-			headersMap.put(OAUTH_SIGNATURE, createSignature(headersMap, secret, httpMethod, url));
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
+		headersMap.put(OAUTH_SIGNATURE, createSignature(headersMap, secret, httpMethod, url));
 
 		return headersMap;
 	}
@@ -123,35 +129,68 @@ public class OAuth10Service extends OAuthService {
 	 * @return a valid OAuth signature
 	 * @throws UnsupportedEncodingException
 	 */
-	private String createSignature(Map<String, String> headersMap, String userSecret, String methodType, String baseUrl) throws UnsupportedEncodingException {
+	private String createSignature(Map<String, String> headersMap, String userSecret, String methodType, String baseUrl){
 
-		String parameterString = "";
+		
 
+		StringBuilder parameterString = new StringBuilder();
+		
 		boolean appendParameter = false;
 		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
-			if(appendParameter) 
-				parameterString += "&";
-			
-			parameterString += entry.getKey() + "=" + entry.getValue();
+			if(appendParameter) {
+				parameterString.append("&");
+			}
+			parameterString.append(entry.getKey()).append("=").append(entry.getValue());
 			appendParameter = true;
 		}
 
-		String signatureBaseString = "";
-		signatureBaseString += methodType;
-		signatureBaseString += "&";
-		signatureBaseString += percentEncode(baseUrl);
-		signatureBaseString += "&";
-		signatureBaseString += percentEncode(parameterString);
+		StringBuilder signatureBaseString = new StringBuilder();
+		signatureBaseString.append(methodType).append("&").append(OAuthUtils.percentEncode(baseUrl)).append("&").append(OAuthUtils.percentEncode(parameterString.toString()));
+		
 		String signingKey = getApiSecret() + "&" + (userSecret == null ? "" : userSecret);
 
+		return createHMACSignature(signatureBaseString.toString(), signingKey);
+
+	}
+	
+	/**
+	   * Generates an HMAC signature given a base string and key
+	   * 
+	   * @param baseString to be turned into oauth signature
+	   * @param signingKey used to sign the baseString (consumersecret& or consumersecret&clientsecret)
+	   * 
+	   * @return the signature used in the oauth header
+	   */
+	public String createHMACSignature(String baseString, String signingKey) {
+		
+		SecretKeySpec key = null;
 		try {
-			return createHMACSignature(signatureBaseString, signingKey);
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			key = new SecretKeySpec(signingKey.getBytes(UTF8), HMAC_SHA1);
+		} catch (UnsupportedEncodingException e) {
+			throw(new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
 		}
-		return "";
+	    Mac mac = null;
+		try {
+			mac = Mac.getInstance(HMAC_SHA1);
+		} catch (NoSuchAlgorithmException e) {
+			throw(new OAuthSignatureException("Error creating signature: No Algorithm HMAC-SHA1", e));
+		}
+	    try {
+			mac.init(key);
+		} catch (InvalidKeyException e) {
+			throw new OAuthKeyException("Error creating signature: Invalid Key", e);
+		}
+	    byte[] bytes = null;
+		try {
+			bytes = mac.doFinal(baseString.getBytes(UTF8));
+		} catch (IllegalStateException e) {
+			throw(new OAuthSignatureException("Error creating signature: Illegal State", e));
+		} catch (UnsupportedEncodingException e) {
+			throw(new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
+		}
+	    String sig = new String(Base64.encodeToString(bytes, 0, bytes.length, Base64.DEFAULT)).trim();
+	    
+	    return OAuthUtils.percentEncode(sig);
 	}
 
 	/**
@@ -161,9 +200,8 @@ public class OAuth10Service extends OAuthService {
 	 * @param httpMethod a post or a get
 	 * @param queryParameters additional parameters required on the request
 	 * @return a valid Authorization header
-	 * @throws UnsupportedEncodingException
 	 */
-	public String signOAuthRequest(Token accessToken, String baseUrl, String httpMethod, Map<String,String> queryParameters) throws UnsupportedEncodingException{
+	public String signOAuthRequest(OAuth10Token accessToken, String baseUrl, String httpMethod, Map<String,String> queryParameters) {
 		
 		Map<String, String> headersMap = new TreeMap<String, String>();
 		
@@ -172,7 +210,7 @@ public class OAuth10Service extends OAuthService {
 		if(queryParameters!=null && !queryParameters.isEmpty()){
 			for (Map.Entry<String, String> entry : queryParameters.entrySet())
 			{
-			   headersMap.put(entry.getKey(), percentEncode(entry.getValue()));
+			   headersMap.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
 			}
 		}
 		
@@ -195,7 +233,7 @@ public class OAuth10Service extends OAuthService {
 	public void getOAuthAccessToken(String url) {
 
 		Uri uri = Uri.parse(url);
-		String verifier = uri.getQueryParameter("oauth_verifier").trim();
+		String verifier = uri.getQueryParameter(OAUTH_VERIFIER).trim();
 
 		Map<String, String> headersMap = new TreeMap<String, String>();
 
@@ -203,20 +241,21 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_VERIFIER, verifier);
 
 		setApiCallback(null);
-		String header = buildOAuthHeader("POST", api.getAccessTokenResource(), headersMap, getToken().getUser_secret());
+		String header = buildOAuthHeader(POST, api.getAccessTokenResource(), headersMap, getToken().getUser_secret());
 
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
 
-		final Token accessToken = new Token();
+		final OAuth10Token accessToken = new OAuth10Token();
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource());
 		HootRequest oAuthRequest = hoot.createRequest().setHeaders(headers);
 		oAuthRequest.bindListener(new HootRequestListener() {
 
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
-				accessToken.setAccess_token(extract(result.getResponseString(), TOKEN_REGEX));
-				accessToken.setUser_secret(extract(result.getResponseString(), SECRET_REGEX));
+				String response = result.getResponseString();
+				accessToken.setAccess_token(extractAccessToken(response));
+				accessToken.setUser_secret(extractUserSecret(response));
 				oAuthCallback.onOAuthAccessTokenReceived(accessToken);
 			}
 
@@ -250,12 +289,11 @@ public class OAuth10Service extends OAuthService {
 	 * @return
 	 */
 	public String getAuthorizeUrl(Map<String,String>additionalAuthorizeParams){
-		String url = getAuthorizeUrl();
+		StringBuilder url = new StringBuilder(getAuthorizeUrl());
 		for(Map.Entry<String, String> entry : additionalAuthorizeParams.entrySet()){
-			url+="&";
-			url+=entry.getKey() + "=" + percentEncode(entry.getValue());
+			url.append("&").append(entry.getKey()).append("=").append(OAuthUtils.percentEncode(entry.getValue()));
 		}
-		return url;
+		return url.toString();
 	}
 	
 	/**
@@ -263,10 +301,9 @@ public class OAuth10Service extends OAuthService {
 	 * @return authorize url with parameters
 	 */
 	public String getAuthorizeUrl(){
-		String url = api.getAuthorizeUrl();
-		url += "?oauth_token="+getToken().getAccess_token();
-		url += "&oauth_callback="+percentEncode(getApiCallback());
-		return url;
+		StringBuilder url = new StringBuilder(api.getAuthorizeUrl());
+		url.append("?").append(OAUTH_TOKEN).append("=").append(getToken().getAccess_token()).append("&").append(OAUTH_CALLBACK).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
+		return url.toString();
 	}
 	
 	/**
@@ -289,9 +326,10 @@ public class OAuth10Service extends OAuthService {
 
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
-				Token token = new Token();
-				token.setAccess_token(extract(result.getResponseString(), TOKEN_REGEX));
-				token.setUser_secret(extract(result.getResponseString(), SECRET_REGEX));
+				OAuth10Token token = new OAuth10Token();
+				String response = result.getResponseString();
+				token.setAccess_token(extractAccessToken(response));
+				token.setUser_secret(extractUserSecret(response));
 				setToken(token);
 				oAuthCallback.onOAuthRequestTokenReceived();
 
@@ -314,6 +352,14 @@ public class OAuth10Service extends OAuthService {
 			}
 		});
 		oAuthRequest.post().execute();
+	}
+	
+	private String extractAccessToken(String response){
+		return OAuthUtils.extract(response, TOKEN_REGEX);
+	}
+	
+	private String extractUserSecret(String response){
+		return OAuthUtils.extract(response, SECRET_REGEX);
 	}
 	
 	/**

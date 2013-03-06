@@ -1,10 +1,10 @@
 package com.androauth.oauth;
 
 /**
- * An object to hold the user token and user secret
+ * An object to hold the OAuth1 user token and user secret
  * @author pfives
  */
-public class Token {
+public class OAuth10Token {
 
 	private String access_token = null;
 	private String user_secret = null;
@@ -13,7 +13,7 @@ public class Token {
 	   * An empty token constructor
 	   *
 	   */
-	public Token(){
+	public OAuth10Token(){
 	}
 	
 	/**
@@ -22,7 +22,7 @@ public class Token {
 	   * @param access_token an api access token
 	   * @param user_secret an api user secret
 	   */
-	public Token(String access_token, String user_secret){
+	public OAuth10Token(String access_token, String user_secret){
 		this.access_token = access_token;
 		this.user_secret = user_secret;
 	}

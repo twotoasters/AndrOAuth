@@ -1,18 +1,16 @@
 package com.androauthexample.activities;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import com.androauth.api.TwitterApi;
 import com.androauth.oauth.OAuth10Request;
 import com.androauth.oauth.OAuth10Service;
 import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
+import com.androauth.oauth.OAuth10Token;
 import com.androauth.oauth.OAuthRequest;
 import com.androauth.oauth.OAuthRequest.OnRequestCompleteListener;
 import com.androauth.oauth.OAuthService;
-import com.androauth.oauth.Token;
 import com.twotoasters.androauthexample.R;
 import com.twotoasters.android.hoot.HootResult;
 
@@ -57,7 +55,7 @@ public class MainActivity extends Activity {
 			}
 			
 			@Override
-			public void onOAuthAccessTokenReceived(Token token) {
+			public void onOAuthAccessTokenReceived(OAuth10Token token) {
 				updateStatus(token);
 			}
 		});
@@ -88,7 +86,7 @@ public class MainActivity extends Activity {
 		webview.loadUrl(service.getAuthorizeUrl());
 	}
 	
-	public void updateStatus(Token token){
+	public void updateStatus(OAuth10Token token){
 		
 		
 		String baseUrl = "https://api.twitter.com/1/statuses/update.json";
