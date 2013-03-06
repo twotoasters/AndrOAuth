@@ -27,7 +27,7 @@ public class OAuth10Request extends OAuthRequest{
 		try {
 			authHeader = service.signOAuthRequest(token, requestUrl, POST, getRequestParams());
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+			throw(new OAuthPostException("Failed to sign OAuth request", e));
 		}
 		post(onRequestCompleteListener, authHeader);
 	}

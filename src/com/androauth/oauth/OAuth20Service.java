@@ -59,6 +59,9 @@ public class OAuth20Service extends OAuthService {
 	public void getOAuthAccessToken(String url) {
 		String code = extract(url, CODE_REGEX);
 
+		/*HootRequest request = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource())
+				.setBasicAuth(getApiKey(), getApiSecret())
+				.createRequest();*/
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource());
 
 		hoot.setBasicAuth(getApiKey(), getApiSecret());
@@ -110,19 +113,20 @@ public class OAuth20Service extends OAuthService {
 	 * @return the authorize url with appended parameters
 	 */
 	public String getAuthorizeUrl() {
-
-		String url = null;
-
-		url = api.getAuthorizeUrl();
-		url += "?" + RESPONSE_TYPE + "=" + CODE + "&" + CLIENT_ID + "=" + getApiKey() + "&" + STATE + "=" + "blah";
+		StringBuilder sb = new StringBuilder(api.getAuthorizeUrl())
+			.append("?").append(RESPONSE_TYPE).append("=").append(CODE)
+			.append("&").append(CLIENT_ID).append("=").append(getApiKey())
+			.append("&").append(STATE).append("=").append("blah");
+		
 		if(getApiCallback() != null){
-			url += "&" + REDIRECT_URI + "=" + percentEncode(getApiCallback()); 
+			sb.append("&").append(REDIRECT_URI).append("=").append(percentEncode(getApiCallback()));
 		}
+		
 		if(getScope() != null) {
-			url += "&" + "scope=" + getScope();
+			sb.append("&").append("scope").append("=").append(getScope());
 		}
 
-		return url;
+		return sb.toString();
 	}
 
 }
