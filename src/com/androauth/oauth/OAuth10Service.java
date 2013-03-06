@@ -63,13 +63,32 @@ public class OAuth10Service extends OAuthService {
 	 * @return a valid authorization header
 	 */
 	private String buildOAuthHeader(String httpMethod, String url, Map<String, String> headers, String userSecret) {
-		Map<String, String> headersMap = headers;
-		if(headersMap == null) {
-			headersMap = new TreeMap<String, String>();
+		Map<String, String> headersMap = buildAuthorizationHeaderMap(headers, httpMethod, url, userSecret);
+
+		boolean appendEntry = false;
+		StringBuilder sb = new StringBuilder("OAuth ");
+		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
+			if (appendEntry) {
+				sb.append(", ");
+			}
+			// key = "value"
+			sb.append(entry.getKey())
+				.append("=\"")
+				.append(entry.getValue())
+				.append("\"");
+			appendEntry = true;
 		}
 
-		long millis = System.currentTimeMillis();
-		long timestamp = millis / 1000;
+		return sb.toString();
+	}
+
+	private Map<String, String> buildAuthorizationHeaderMap(Map<String, String> headers, String httpMethod, String url, String secret) {
+		Map<String, String> headersMap = new TreeMap<String, String>();
+		if(headers != null) {
+			headersMap.putAll(headers);
+		}
+
+		long millis = System.currentTimeMillis() / 1000;
 
 		if(getApiCallback() != null) {
 			headersMap.put(OAUTH_CALLBACK, percentEncode(getApiCallback()));
@@ -77,29 +96,16 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_CONSUMER_KEY, getApiKey());
 		headersMap.put(OAUTH_NONCE, String.valueOf(millis + new Random().nextInt()));
 		headersMap.put(OAUTH_SIGNATURE_METHOD, METHOD);
-		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(timestamp));
+		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(millis / 1000));
 		headersMap.put(OAUTH_VERSION, api.getOauthVersion());
+		
 		try {
-			headersMap.put(OAUTH_SIGNATURE, createSignature(headersMap, userSecret, httpMethod, url));
+			headersMap.put(OAUTH_SIGNATURE, createSignature(headersMap, secret, httpMethod, url));
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 
-		String authorizationHeader = "OAuth ";
-
-		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
-			authorizationHeader += entry.getKey();
-			authorizationHeader += "=";
-			authorizationHeader += "\"";
-			authorizationHeader += entry.getValue();
-			authorizationHeader += "\"";
-			authorizationHeader += ", ";
-		}
-
-		// removes the final comma and space from the Authorization header
-		authorizationHeader = authorizationHeader.substring(0, authorizationHeader.length() - 2);
-
-		return authorizationHeader;
+		return headersMap;
 	}
 
 	/**
@@ -121,13 +127,13 @@ public class OAuth10Service extends OAuthService {
 
 		String parameterString = "";
 
-		int i = 0;
+		boolean appendParameter = false;
 		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
-			if(i > 0) {
+			if(appendParameter) 
 				parameterString += "&";
-			}
+			
 			parameterString += entry.getKey() + "=" + entry.getValue();
-			i++;
+			appendParameter = true;
 		}
 
 		String signatureBaseString = "";
