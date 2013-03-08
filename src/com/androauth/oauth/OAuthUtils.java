@@ -53,5 +53,21 @@ public class OAuthUtils {
 	    }
 	    return extraction;
 	 }
+	
+	public static void appendFirstQueryParam(StringBuilder sb, String key, String value) {
+	    if (!isNullOrEmpty(value)) {
+	        sb.append("?").append(key).append("=").append(value);
+	    }
+	}
 
+	public static void appendQueryParam(StringBuilder sb, String key, String value) {
+	    if (!isNullOrEmpty(value)) {
+	        sb.append("&").append(key).append("=").append(value);
+	    }
+	}
+
+	public static boolean isNullOrEmpty(String s) {
+		return s == null || s.length()==0;
+	}
+	
 }

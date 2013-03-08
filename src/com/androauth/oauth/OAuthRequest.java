@@ -10,7 +10,7 @@ import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
 
 /**
  * 
- * OAuth request class for apis that conform to the OAuth 2.0 spec
+ * OAuth request class 
  * @author pfives
  */
 public class OAuthRequest {
@@ -46,11 +46,12 @@ public class OAuthRequest {
 	}
 	
 	/**
-	 * Creates a new OAuth10Request 
+	 * Creates a new OAuth1.0 request
 	 * @param oAuthRequestUrl the url that the oauth request will be executed on
-	 * @param token an object containing the access_token and user_secret
-	 * @param service an instance of OAuth10Service with key and secret set
-	 * @return a new OAuth10Request
+	 * @param token an OAuth1 token containing an access token user secret
+	 * @param service an OAuth1 service instance with consumer secret and consumer key
+	 * @param onCompleteListner an interface to notify the caller when the request completes
+	 * @return an OAuth1.0 request
 	 */
 	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
 		onRequestCompleteListener = onCompleteListner;
@@ -58,6 +59,15 @@ public class OAuthRequest {
 		return new OAuth10Request(token, service);	
 	}
 	
+	/**
+	 * Creates a new OAuth1.0 request
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param accessToken a string containing the access token
+	 * @param userSecret a string containing the user secret
+	 * @param service an OAuth1 service instance with consumer secret and consumer key
+	 * @param onCompleteListner an interface to notify the caller when the request completes
+	 * @return an OAuth1.0 request
+	 */
 	public static OAuth10Request newInstance(String oAuthRequestUrl, String accessToken, String userSecret, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
 		onRequestCompleteListener = onCompleteListner;
@@ -65,10 +75,11 @@ public class OAuthRequest {
 	}
 	
 	/**
-	 * Creates a new OAuth20Request
+	 * Creates a new OAuth2.0 request
 	 * @param oAuthRequestUrl the url that the oauth request will be executed on
-	 * @param token a string containing the access_token
-	 * @return a new OAuth20Request
+	 * @param token an OAuth2 token containing an access token and refresh token if available
+	 * @param onCompleteListner an inteface to notify the caller when the request completes
+	 * @return an OAuth2.0 request
 	 */
 	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
@@ -76,18 +87,42 @@ public class OAuthRequest {
 		return new OAuth20Request(token);
 	}
 	
+	/**
+	 * Creates a new OAuth2.0 request
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param token an OAuth2 token containing an access token and refresh token if available
+	 * @param service an OAuth2 service instance with consumer secret and consumer key (used for refreshing access token)
+	 * @param onCompleteListner an interface to notify the caller when the request completes
+	 * @return an OAuth2.0 request
+	 */
 	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
 		onRequestCompleteListener = onCompleteListner;
 		return new OAuth20Request(token, service);
 	}
 	
+	/**
+	 * Creates a new OAuth2.0 request
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param accessToken a string containing an access token
+	 * @param refreshToken a string containing a refresh token
+	 * @param service an OAuth2 service instance with consumer secret and consumer key (used for refreshing access token)
+	 * @param onCompleteListner an interface to notify the caller when the request completes
+	 * @return an OAuth2.0 request
+	 */
 	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, String refreshToken, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
 		onRequestCompleteListener = onCompleteListner;
 		return new OAuth20Request(new OAuth20Token(accessToken, refreshToken), service);
 	}
 	
+	/**
+	 * Creates a new OAuth2.0 request
+	 * @param oAuthRequestUrl the url that the oauth request will be executed on
+	 * @param accessToken a string containing an access token
+	 * @param onCompleteListner an interface to notify the caller when the request completes
+	 * @return an OAuth2.0 request
+	 */
 	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
 		onRequestCompleteListener = onCompleteListner;
@@ -119,6 +154,11 @@ public class OAuthRequest {
 		this.requestParams = requestParams;
 	}
 	
+	/**
+	 * Attempts to refresh the access token if a request failed OAuth 2.0 only
+	 * @param method post or get
+	 * @param result why the request failed
+	 */
 	public void refreshAccessToken(String method, HootResult result){
 		onRequestCompleteListener.onFailure(result);
 	}
@@ -126,7 +166,7 @@ public class OAuthRequest {
 	/**
 	   * Starts a Hoot Get
 	   *
-	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
+	   * @param authHeader a valid authorization header for OAuth1.0 or 2.0 
 	   */
 	protected void get(String authHeader) {
 		HootRequest request = execute(GET, authHeader);
@@ -136,7 +176,7 @@ public class OAuthRequest {
 	/**
 	   * Starts a Hoot Post
 	   *
-	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
+	   * @param authHeader a valid authorization header for OAuth1.0 or 2.0 
 	   */
 	protected void post(String authHeader) {
 		HootRequest request = execute(POST, authHeader);
@@ -148,14 +188,12 @@ public class OAuthRequest {
 	}
 
 	/**
-	   * Constructs a HootRequest object for OAuth 2.0 calls
-	   * Sets Bearer header and other headers,queryparameters set by OAuthRequest
-	   *
-	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
-	   * @param method a get(1) or post(2)
-	   * 
-	   * @return a HootRequest instance
-	   */
+	 * Constructs a HootRequest object for OAuth calls
+	 * Sets Bearer header and other headers,queryparameters set by OAuthRequest
+	 * @param method post or get
+	 * @param authHeader a valid authorization header for OAuth1.0 or 2.0
+	 * @return a hoot request instance
+	 */
 	private HootRequest execute(final String method, String authHeader) {
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(requestUrl);
 		HootRequest request = hoot.createRequest();

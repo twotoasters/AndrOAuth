@@ -36,9 +36,24 @@ public class OAuth10Service extends OAuthService {
 	 *
 	 */
 	public interface OAuth10ServiceCallback{
+		/**
+		 * Notifies when an oauth request token has been received
+		 */
 		public void onOAuthRequestTokenReceived();
+		/**
+		 * Notifies when a request token request has failed
+		 * @param result
+		 */
 		public void onOAuthRequestTokenFailed(HootResult result);
+		/**
+		 * Notifies when an oauth access token has been received
+		 * @param token and OAuth10 token containing an access token and user secret
+		 */
 		public void onOAuthAccessTokenReceived(OAuth10Token token);
+		/**
+		 * Notifies when an access token request has failed
+		 * @param result
+		 */
 		public void onOAuthAccessTokenFailed(HootResult result);
 	}
 	
@@ -95,6 +110,14 @@ public class OAuth10Service extends OAuthService {
 		return sb.toString();
 	}
 
+	/**
+	 * Builds a map of headers used on OAuth1.0 request
+	 * @param headers any additional headers
+	 * @param httpMethod post or get
+	 * @param url the url the request will be made on 
+	 * @param secret the user secret provided by the api after getting a request token
+	 * @return a sorted map of headers
+	 */
 	private Map<String, String> buildAuthorizationHeaderMap(Map<String, String> headers, String httpMethod, String url, String secret) {
 		Map<String, String> headersMap = new TreeMap<String, String>();
 		if(headers != null) {
@@ -290,7 +313,7 @@ public class OAuth10Service extends OAuthService {
 	public String getAuthorizeUrl(Map<String,String>additionalAuthorizeParams){
 		StringBuilder url = new StringBuilder(getAuthorizeUrl());
 		for(Map.Entry<String, String> entry : additionalAuthorizeParams.entrySet()){
-			url.append("&").append(entry.getKey()).append("=").append(OAuthUtils.percentEncode(entry.getValue()));
+			OAuthUtils.appendQueryParam(url, entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
 		}
 		return url.toString();
 	}
@@ -301,7 +324,8 @@ public class OAuth10Service extends OAuthService {
 	 */
 	public String getAuthorizeUrl(){
 		StringBuilder url = new StringBuilder(api.getAuthorizeUrl());
-		url.append("?").append(OAUTH_TOKEN).append("=").append(getToken().getAccessToken()).append("&").append(OAUTH_CALLBACK).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
+		OAuthUtils.appendFirstQueryParam(url, OAUTH_TOKEN, getToken().getAccessToken());
+		OAuthUtils.appendQueryParam(url, OAUTH_CALLBACK, OAuthUtils.percentEncode(getApiCallback()));
 		return url.toString();
 	}
 	

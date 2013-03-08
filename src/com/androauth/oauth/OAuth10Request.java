@@ -1,5 +1,10 @@
 package com.androauth.oauth;
 
+/**
+ * An OAuth1.0 request class
+ * @author pfives
+ *
+ */
 public class OAuth10Request extends OAuthRequest{
 
 	private OAuth10Token token;

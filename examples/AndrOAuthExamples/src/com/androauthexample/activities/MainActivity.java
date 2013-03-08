@@ -116,9 +116,9 @@ public class MainActivity extends Activity {
 				// TODO Auto-generated method stub
 				
 			}
-			
+
 			@Override
-			public void onFailure() {
+			public void onFailure(HootResult result) {
 				// TODO Auto-generated method stub
 				
 			}

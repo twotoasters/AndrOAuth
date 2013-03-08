@@ -3,6 +3,7 @@ package com.androauth.oauth;
 import java.util.HashMap;
 import java.util.Map;
 
+
 import com.androauth.api.OAuth20Api;
 import com.androauth.oauth.OAuth20Request.OAuthRefreshTokenCallback;
 import com.twotoasters.android.hoot.Hoot;
@@ -35,22 +36,33 @@ public class OAuth20Service extends OAuthService {
 	 *
 	 */
 	public interface OAuth20ServiceCallback{
+		/**
+		 * Notifies when an access token has been successfully received
+		 * @param token
+		 */
 		public void onOAuthAccessTokenReceived(OAuth20Token token);
+		/**
+		 * Notifies when an access token request has failed
+		 * @param result
+		 */
 		public void onAccessTokenRequestFailed(HootResult result);
 	}
 	
 	/**
-	 * Constructs a new OAuth20Service
-	 * 
-	 * @param oAuth20Api
-	 *            a class that implements OAuth20Api
+	 * Constructs a new OAuth20 service
+	 * @param oAuth20Api a class that extends OAuth20Api
+	 * @param oAuth20ServiceCallback an interface to notify the caller when the request completes
 	 */
 	public OAuth20Service(OAuth20Api oAuth20Api, OAuth20ServiceCallback oAuth20ServiceCallback) {
 		oAuthCallback = oAuth20ServiceCallback;
 		api = oAuth20Api;
 	}
 
-	
+	/**
+	 * Makes a request to refresh an access token using an existing refresh token
+	 * @param refreshToken a valid refresh token
+	 * @param oAuthRefreshTokenCallback an interface to notify the caller when the request completes
+	 */
 	public void refreshAccessToken(String refreshToken, final OAuthRefreshTokenCallback oAuthRefreshTokenCallback){
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource());
 
@@ -104,8 +116,6 @@ public class OAuth20Service extends OAuthService {
 	 * @param url
 	 *            the url redirected by the api after user verifies access (base
 	 *            is apiCallback plus queryParameters)
-	 * @param oAuthAccessTokenCallback
-	 *            interface used to notify when access token is received
 	 */
 	public void getOAuthAccessToken(String url) {
 		String code = OAuthUtils.extract(url, CODE_REGEX);
@@ -166,23 +176,16 @@ public class OAuth20Service extends OAuthService {
 	 * @return the authorize url with appended parameters
 	 */
 	public String getAuthorizeUrl() {
-		StringBuilder sb = new StringBuilder(api.getAuthorizeUrl())
-			.append("?").append(RESPONSE_TYPE).append("=").append(CODE)
-			.append("&").append(CLIENT_ID).append("=").append(getApiKey())
-			.append("&").append(STATE).append("=").append("blah");
 		
-		if(getApiCallback() != null){
-			sb.append("&").append(REDIRECT_URI).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
-		}
-		
-		if(getScope() != null) {
-			sb.append("&").append(SCOPE).append("=").append(getScope());
-		}
-		if(getDuration()!=null){
-			sb.append("&").append(DURATION).append("=").append(getDuration());
-		}
+		StringBuilder sb = new StringBuilder(api.getAuthorizeUrl());
+	    OAuthUtils.appendFirstQueryParam(sb, RESPONSE_TYPE, CODE);
+	    OAuthUtils.appendQueryParam(sb, CLIENT_ID, getApiKey());
+	    OAuthUtils.appendQueryParam(sb, STATE, "blah");
+	    OAuthUtils.appendQueryParam(sb, REDIRECT_URI, OAuthUtils.percentEncode(getApiCallback()));
+	    OAuthUtils.appendQueryParam(sb, SCOPE, getScope());
+	    OAuthUtils.appendQueryParam(sb, DURATION, getDuration());
+	    return sb.toString();
 
-		return sb.toString();
 	}
 
 }

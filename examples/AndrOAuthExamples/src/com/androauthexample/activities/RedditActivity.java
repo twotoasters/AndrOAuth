@@ -61,11 +61,9 @@ public class RedditActivity extends Activity{
 			
 			@Override
 			public void onOAuthAccessTokenReceived(OAuth20Token token) {
-				Log.v("into","got the goods: "+token.getAccessToken()+" -- "+token.getRefreshToken());
 				editor.putString("access_token", token.getAccessToken());
 				editor.putString("refresh_token", token.getRefreshToken()); 
 				editor.commit();
-				//getCaptcha(token); 
 			}
 
 			@Override
@@ -76,9 +74,7 @@ public class RedditActivity extends Activity{
 		});
 		String accessToken = sharedPreferences.getString("access_token", null);
 		String refreshToken = sharedPreferences.getString("refresh_token", null);
-		Log.v("into","using: "+accessToken + "--" + refreshToken);
 		OAuth20Token existingToken = new OAuth20Token(accessToken, refreshToken);
-		//getCaptcha(existingToken);
 		getInfo(existingToken);
 	}
 
@@ -87,11 +83,10 @@ public class RedditActivity extends Activity{
 			
 			@Override
 			public void onOAuthAccessTokenReceived(OAuth20Token token) {
-				Log.v("into","got the goods: "+token.getAccessToken()+" -- "+token.getRefreshToken());
 				editor.putString("access_token", token.getAccessToken());
 				editor.putString("refresh_token", token.getRefreshToken()); 
 				editor.commit();
-				//getCaptcha(token); 
+				getInfo(token); 
 			}
 
 			@Override
@@ -129,24 +124,6 @@ public class RedditActivity extends Activity{
 		webview.loadUrl(service.getAuthorizeUrl());
 	}
 	
-//	private void getCaptcha(OAuth20Token token){
-//		
-//		OAuth20Request request = OAuthRequest.newInstance("https://oauth.reddit.com/api/new_captcha", token);
-//		
-//		request.post(new OnRequestCompleteListener() {
-//			
-//			@Override
-//			public void onSuccess(HootResult result) {
-//				Log.v("into","finalsuccess: "+result.getResponseString());
-//			}
-//			
-//			@Override
-//			public void onFailure() {
-//				Log.v("into","failure");	
-//			}
-//		});
-//	}
-	
 	private void getInfo(OAuth20Token token){
 		OAuth20Request request = OAuthRequest.newInstance("https://oauth.reddit.com/api/v1/me",token, service, new OnRequestCompleteListener() {
 			
@@ -160,7 +137,9 @@ public class RedditActivity extends Activity{
 			}
 			
 			@Override
-			public void onFailure() {
+			public void onFailure(HootResult result) {
+				// TODO Auto-generated method stub
+				
 			}
 		}); 
 		request.get();
