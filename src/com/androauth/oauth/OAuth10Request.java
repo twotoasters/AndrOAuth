@@ -20,8 +20,7 @@ public class OAuth10Request extends OAuthRequest{
 	 * @param onRequestCompleteListener
 	 */
 	public void post(OnRequestCompleteListener onRequestCompleteListener) {
-		String authHeader = service.signOAuthRequest(token, requestUrl, POST, getRequestParams());
-		post(onRequestCompleteListener, authHeader);
+		post(getAuthHeader(POST));
 	}
 	
 	/**
@@ -29,8 +28,16 @@ public class OAuth10Request extends OAuthRequest{
 	 * @param onRequestCompleteListener
 	 */
 	public void get(OnRequestCompleteListener onRequestCompleteListener){
-		String authHeader = service.signOAuthRequest(token, requestUrl, GET, getRequestParams());
-		get(onRequestCompleteListener, authHeader);
+		get(getAuthHeader(GET));
+	}
+	
+	/**
+	 * Gets a valid OAuth 1.0 header
+	 * @param method (post or get)
+	 * @return valid header
+	 */
+	private String getAuthHeader(String method){
+		return service.signOAuthRequest(token, requestUrl, method, getRequestParams());
 	}
 
 }

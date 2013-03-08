@@ -22,13 +22,27 @@ public class OAuthRequest {
 	protected static final String BEARER = "Bearer ";
 	protected static final String POST = "POST";
 	protected static final String GET = "GET";
-
+	protected static OnRequestCompleteListener onRequestCompleteListener;
+	
 	/**
 	 * An interface for notifying the caller when the hoot request completes
 	 */
 	public interface OnRequestCompleteListener {
+		/**
+		 * Returns the result from a successful OAuth request
+		 * @param result
+		 */
 		public void onSuccess(HootResult result);
-		public void onFailure();
+		/**
+		 * Returns a new access token if an OAuth request initially failed
+		 * OAuth 2.0 only
+		 * @param token
+		 */
+		public void onNewAccessTokenReceived(OAuth20Token token);
+		/**
+		 * Callback if OAuth request fails
+		 */
+		public void onFailure(HootResult result);
 	}
 	
 	/**
@@ -38,9 +52,16 @@ public class OAuthRequest {
 	 * @param service an instance of OAuth10Service with key and secret set
 	 * @return a new OAuth10Request
 	 */
-	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service){
+	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
+		onRequestCompleteListener = onCompleteListner;
 		requestUrl = oAuthRequestUrl;
 		return new OAuth10Request(token, service);	
+	}
+	
+	public static OAuth10Request newInstance(String oAuthRequestUrl, String accessToken, String userSecret, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
+		requestUrl = oAuthRequestUrl;
+		onRequestCompleteListener = onCompleteListner;
+		return new OAuth10Request(new OAuth10Token(accessToken, userSecret), service);
 	}
 	
 	/**
@@ -49,9 +70,28 @@ public class OAuthRequest {
 	 * @param token a string containing the access_token
 	 * @return a new OAuth20Request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token){
+	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OnRequestCompleteListener onCompleteListner){
 		requestUrl = oAuthRequestUrl;
-		return new OAuth20Request(token.getAccessToken());
+		onRequestCompleteListener = onCompleteListner;
+		return new OAuth20Request(token);
+	}
+	
+	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
+		requestUrl = oAuthRequestUrl;
+		onRequestCompleteListener = onCompleteListner;
+		return new OAuth20Request(token, service);
+	}
+	
+	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, String refreshToken, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
+		requestUrl = oAuthRequestUrl;
+		onRequestCompleteListener = onCompleteListner;
+		return new OAuth20Request(new OAuth20Token(accessToken, refreshToken), service);
+	}
+	
+	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, OnRequestCompleteListener onCompleteListner){
+		requestUrl = oAuthRequestUrl;
+		onRequestCompleteListener = onCompleteListner;
+		return new OAuth20Request(new OAuth20Token(accessToken));
 	}
 
 	/**
@@ -78,14 +118,18 @@ public class OAuthRequest {
 	public void setRequestParams(Map<String, String> requestParams) {
 		this.requestParams = requestParams;
 	}
+	
+	public void refreshAccessToken(String method, HootResult result){
+		onRequestCompleteListener.onFailure(result);
+	}
 
 	/**
 	   * Starts a Hoot Get
 	   *
 	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
 	   */
-	public void get(OnRequestCompleteListener onRequestCompleteListener, String authHeader) {
-		HootRequest request = execute(onRequestCompleteListener, GET, authHeader);
+	protected void get(String authHeader) {
+		HootRequest request = execute(GET, authHeader);
 		request.get().execute();
 	}
 
@@ -94,8 +138,8 @@ public class OAuthRequest {
 	   *
 	   * @param onRequestCompleteListener an interface for notifying when this hoot request completes
 	   */
-	public void post(OnRequestCompleteListener onRequestCompleteListener, String authHeader) {
-		HootRequest request = execute(onRequestCompleteListener, POST, authHeader);
+	protected void post(String authHeader) {
+		HootRequest request = execute(POST, authHeader);
 		if(getRequestParams() != null) {
 			request.post(getRequestParams()).execute();
 		} else {
@@ -112,9 +156,8 @@ public class OAuthRequest {
 	   * 
 	   * @return a HootRequest instance
 	   */
-	private HootRequest execute(final OnRequestCompleteListener onRequestCompleteListener, String method, String authHeader) {
+	private HootRequest execute(final String method, String authHeader) {
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(requestUrl);
-
 		HootRequest request = hoot.createRequest();
 		request.setStreamingMode(HootRequest.STREAMING_MODE_FIXED);
 
@@ -148,7 +191,8 @@ public class OAuthRequest {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
-				onRequestCompleteListener.onFailure();
+				String errorResponse = extractErrorResponse(result.getResponseString());
+				refreshAccessToken(method, result);
 			}
 
 			@Override
@@ -157,5 +201,9 @@ public class OAuthRequest {
 		});
 		
 		return request;
+	}
+	
+	private String extractErrorResponse(String response){
+		return OAuthUtils.extract(response, OAuthService.ERROR_JSON_REGEX);
 	}
 }

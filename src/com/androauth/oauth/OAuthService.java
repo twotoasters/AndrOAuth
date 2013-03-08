@@ -27,8 +27,9 @@ public class OAuthService {
 	public static final String POST = "POST";
 	public static final Pattern TOKEN_REGEX = Pattern.compile("oauth_token=([^&]+)");
     public static final Pattern SECRET_REGEX = Pattern.compile("oauth_token_secret=([^&]*)");
-    public static final Pattern ACCESS_TOKEN_REGEX = Pattern.compile("\"access_token\":\"(( ([^\"]*))|(([^\"]*)))\"");
-    public static final Pattern REFRESH_TOKEN_REGEX = Pattern.compile("\"refresh_token\":\"(( ([^\"]*))|(([^\"]*)))\"");
+    public static final Pattern ACCESS_TOKEN_REGEX = Pattern.compile("\"access_token\":[ ]*\"([^\"]*)\"");
+    public static final Pattern REFRESH_TOKEN_REGEX = Pattern.compile("\"refresh_token\":[ ]*\"([^\"]*)\"");
+    public static final Pattern ERROR_JSON_REGEX = Pattern.compile("\"refresh_token\":[ ]*\"([^\"]*)\"");
     public static final Pattern CODE_REGEX = Pattern.compile("code=([^&]*)");
     
 	private static String apiKey;
@@ -37,6 +38,8 @@ public class OAuthService {
 	private String apiVersion;
 	private String scope;
 	private OAuth10Token token;
+	private String duration;
+
 
 	/**
 	   * Constructs a new OAuthService for apis using OAuth 1.0
@@ -129,6 +132,24 @@ public class OAuthService {
 	   */
 	public void setScope(String scope) {
 		this.scope = scope;
+	}
+	
+	/**
+	 * Gets the duration for the access token
+	 * 
+	 * @return duration
+	 */
+	public String getDuration() {
+		return duration;
+	}
+
+	/**
+	 * Sets the duration for the access token
+	 * Values are typically 'temporary' or 'permanent'
+	 * @param duration
+	 */
+	public void setDuration(String duration) {
+		this.duration = duration;
 	}
 	
 	/**

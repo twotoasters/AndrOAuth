@@ -37,7 +37,9 @@ public class OAuth10Service extends OAuthService {
 	 */
 	public interface OAuth10ServiceCallback{
 		public void onOAuthRequestTokenReceived();
+		public void onOAuthRequestTokenFailed(HootResult result);
 		public void onOAuthAccessTokenReceived(OAuth10Token token);
+		public void onOAuthAccessTokenFailed(HootResult result);
 	}
 	
 	private OAuth10Api api;
@@ -202,7 +204,7 @@ public class OAuth10Service extends OAuthService {
 		
 		Map<String, String> headersMap = new TreeMap<String, String>();
 		
-		headersMap.put(OAUTH_TOKEN, accessToken.getAccess_token());
+		headersMap.put(OAUTH_TOKEN, accessToken.getAccessToken());
 		
 		if(queryParameters!=null && !queryParameters.isEmpty()){
 			for (Map.Entry<String, String> entry : queryParameters.entrySet())
@@ -211,7 +213,7 @@ public class OAuth10Service extends OAuthService {
 			}
 		}
 		
-		return buildOAuthHeader(httpMethod, baseUrl, headersMap, accessToken.getUser_secret());
+		return buildOAuthHeader(httpMethod, baseUrl, headersMap, accessToken.getUserSecret());
 	}
 	
 	/**
@@ -234,16 +236,15 @@ public class OAuth10Service extends OAuthService {
 
 		Map<String, String> headersMap = new TreeMap<String, String>();
 
-		headersMap.put(OAUTH_TOKEN, getToken().getAccess_token());
+		headersMap.put(OAUTH_TOKEN, getToken().getAccessToken());
 		headersMap.put(OAUTH_VERIFIER, verifier);
 
 		setApiCallback(null);
-		String header = buildOAuthHeader(POST, api.getAccessTokenResource(), headersMap, getToken().getUser_secret());
+		String header = buildOAuthHeader(POST, api.getAccessTokenResource(), headersMap, getToken().getUserSecret());
 		
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
 
-		final OAuth10Token accessToken = new OAuth10Token();
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getAccessTokenResource());
 		HootRequest oAuthRequest = hoot.createRequest().setHeaders(headers);
 		oAuthRequest.bindListener(new HootRequestListener() {
@@ -251,9 +252,10 @@ public class OAuth10Service extends OAuthService {
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
 				String response = result.getResponseString();
-				accessToken.setAccess_token(extractAccessToken(response));
-				accessToken.setUser_secret(extractUserSecret(response));
-				oAuthCallback.onOAuthAccessTokenReceived(accessToken);
+				String accessToken = extractAccessToken(response);
+				String userSecret = extractUserSecret(response);
+				OAuth10Token token = new OAuth10Token(accessToken, userSecret);
+				oAuthCallback.onOAuthAccessTokenReceived(token);
 			}
 
 			@Override
@@ -268,7 +270,7 @@ public class OAuth10Service extends OAuthService {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
-
+				oAuthCallback.onOAuthAccessTokenFailed(result);
 			}
 
 			@Override
@@ -299,7 +301,7 @@ public class OAuth10Service extends OAuthService {
 	 */
 	public String getAuthorizeUrl(){
 		StringBuilder url = new StringBuilder(api.getAuthorizeUrl());
-		url.append("?").append(OAUTH_TOKEN).append("=").append(getToken().getAccess_token()).append("&").append(OAUTH_CALLBACK).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
+		url.append("?").append(OAUTH_TOKEN).append("=").append(getToken().getAccessToken()).append("&").append(OAUTH_CALLBACK).append("=").append(OAuthUtils.percentEncode(getApiCallback()));
 		return url.toString();
 	}
 	
@@ -323,8 +325,8 @@ public class OAuth10Service extends OAuthService {
 			public void onSuccess(HootRequest request, HootResult result) {
 				OAuth10Token token = new OAuth10Token();
 				String response = result.getResponseString();
-				token.setAccess_token(extractAccessToken(response));
-				token.setUser_secret(extractUserSecret(response));
+				token.setAccessToken(extractAccessToken(response));
+				token.setUserSecret(extractUserSecret(response));
 				setToken(token);
 				oAuthCallback.onOAuthRequestTokenReceived();
 
@@ -340,6 +342,7 @@ public class OAuth10Service extends OAuthService {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
+				oAuthCallback.onOAuthRequestTokenFailed(result);
 			}
 
 			@Override

@@ -15,6 +15,7 @@ import com.androauth.oauth.OAuth20Token;
 import com.androauth.oauth.OAuthService;
 import com.androauth.oauth.OAuth20Service.OAuth20ServiceCallback;
 import com.twotoasters.androauthexample.R;
+import com.twotoasters.android.hoot.HootResult;
 
 public class ImgurActivity extends Activity {
 	
@@ -45,7 +46,11 @@ public class ImgurActivity extends Activity {
 			
 			@Override
 			public void onOAuthAccessTokenReceived(OAuth20Token token) {
-				Log.v("into","main success: "+token.getAccessToken());
+				Log.v("into","success: "+token.getAccessToken());
+			}
+			
+			@Override
+			public void onAccessTokenRequestFailed(HootResult result) {
 			}
 		});
 		service.setApiCallback(CALLBACK);

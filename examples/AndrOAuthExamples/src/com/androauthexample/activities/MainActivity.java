@@ -6,6 +6,7 @@ import java.util.Map;
 import com.androauth.api.TwitterApi;
 import com.androauth.oauth.OAuth10Request;
 import com.androauth.oauth.OAuth10Service;
+import com.androauth.oauth.OAuth20Token;
 import com.androauth.oauth.OAuth10Service.OAuth10ServiceCallback;
 import com.androauth.oauth.OAuth10Token;
 import com.androauth.oauth.OAuthRequest;
@@ -58,6 +59,18 @@ public class MainActivity extends Activity {
 			public void onOAuthAccessTokenReceived(OAuth10Token token) {
 				updateStatus(token);
 			}
+
+			@Override
+			public void onOAuthRequestTokenFailed(HootResult result) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onOAuthAccessTokenFailed(HootResult result) {
+				// TODO Auto-generated method stub
+				
+			}
 		});
 		service.setApiCallback(CALLBACK);
 		service.start();
@@ -90,25 +103,32 @@ public class MainActivity extends Activity {
 		
 		
 		String baseUrl = "https://api.twitter.com/1/statuses/update.json";
-		OAuth10Request request = OAuthRequest.newInstance(baseUrl, token, service);
+		OAuth10Request request = OAuthRequest.newInstance(baseUrl, token, service, new OnRequestCompleteListener() {
+			
+			@Override
+			public void onSuccess(HootResult result) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void onNewAccessTokenReceived(OAuth20Token token) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void onFailure() {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		Map<String,String> queryParameters = new HashMap<String,String>();
 		queryParameters.put("status", "thor reads books");
 		
 		request.setRequestParams(queryParameters);
 		
-		request.post(new OnRequestCompleteListener() {
-			
-			@Override
-			public void onSuccess(HootResult result) {
-				Log.v("into","super succcess: "+result.getResponseString());
-			}
-			
-			@Override
-			public void onFailure() {
-				Log.v("into","on failure ");
-				
-			}
-		});
+		
 		
 //		Map<String,String> queryParameters = new HashMap<String,String>();
 //		String baseUrl = "https://api.twitter.com/1/statuses/update.json";

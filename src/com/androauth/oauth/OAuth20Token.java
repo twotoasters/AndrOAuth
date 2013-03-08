@@ -8,10 +8,22 @@ public class OAuth20Token {
 	private String accessToken;
 	private String refreshToken;
 	
-	
+	/**
+	 * Constructor for access token and refresh token
+	 * @param accessToken
+	 * @param refreshToken
+	 */
 	public OAuth20Token(String accessToken, String refreshToken){
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
+	}
+	
+	/**
+	 * Constructor for access token only
+	 * @param accessToken
+	 */
+	public OAuth20Token(String accessToken){
+		this.accessToken = accessToken;
 	}
 	
 	/**
