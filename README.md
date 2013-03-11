@@ -1,7 +1,7 @@
 AndrOAuth
 =========
 
-A simple OAuth library for Android based on Hoot rest client<br><br>
+A simple OAuth library for Android based on <a href="https://github.com/twotoasters/hoot">Hoot</a><br><br>
 
 
 ##Installation
