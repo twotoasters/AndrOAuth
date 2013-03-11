@@ -12,10 +12,11 @@ A simple OAuth library for Android based on Hoot rest client<br><br>
 ##Implementation
   
   The OAuth flow is slightly different between versions 1.0 and 2.0 but both are easy to implement.<br>
-  Detailed OAuth 1.0 instructions <br>
-  Detailed OAuth 2.0 instructions <br>
+  <a href="https://github.com/twotoasters/AndrOAuth/wiki/OAuth-1.0-Implementation">Detailed OAuth 1.0 instructions</a><br>
+  <a href="https://github.com/twotoasters/AndrOAuth/wiki/OAuth-2.0-Implementation">Detailed OAuth 2.0 instructions</a><br>
+  <a href="https://github.com/twotoasters/AndrOAuth/tree/master/examples/AndrOAuthExamples/src/com/androauthexample/activities">Basic Examples</a><br>
   
-  See if your API is already supported here.<br>
+  See if your API is already supported <a href="https://github.com/twotoasters/AndrOAuth/tree/master/src/com/androauth/api">here</a>.<br>
   If not, it's as easy as extending the OAuth10Api or OAuth20Api and copy-pasting the correct URL's. (and then add it to the group!)
   <br><br>
   But basically, to get an access token:
@@ -46,27 +47,21 @@ A simple OAuth library for Android based on Hoot rest client<br><br>
     			
     			@Override
     			public void onSuccess(HootResult result) {
-    				// TODO Auto-generated method stub
-    				
     			}
     			
     			@Override
     			public void onNewAccessTokenReceived(OAuth20Token token) {
-    				// TODO Auto-generated method stub
-    				
     			}
     
     			@Override
     			public void onFailure(HootResult result) {
-    				// TODO Auto-generated method stub
-    				
     			}
     		});
     		Map<String,String> queryParameters = new HashMap<String,String>();
     		queryParameters.put("status", "that's all folks");
     		request.setRequestParams(queryParameters);
   
- It's that simple.
+ That's it.
   
 ##License
 
