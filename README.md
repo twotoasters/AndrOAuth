@@ -7,7 +7,7 @@ A simple OAuth library for Android based on Hoot rest client<br><br>
 ##Installation
 
   Download the androauth.jar file here<br>
-  Detailed installation instructions can be found here<br>
+  <a href="https://github.com/twotoasters/AndrOAuth/wiki/Installation-Instructions">Detailed installation instructions</a><br>
 
 ##Implementation
   
