@@ -74,6 +74,26 @@ public class OAuth10Service extends OAuthService {
 		oAuthCallback = oAuth10Callback;
 		api = oAuth10Api;
 	}
+	
+	
+	/**
+	 * Gets the interface callback
+	 * @return
+	 */
+	public OAuth10ServiceCallback getoAuthCallback() {
+		return oAuthCallback;
+	}
+
+
+	/**
+	 * Sets an interface callback to tell when access and request tokens have been received
+	 * @param oAuthCallback
+	 */
+	public void setoAuthCallback(OAuth10ServiceCallback oAuthCallback) {
+		this.oAuthCallback = oAuthCallback;
+	}
+
+
 
 	/**
 	 * Builds an authorization header that conforms to the OAuth 1.0 spec
