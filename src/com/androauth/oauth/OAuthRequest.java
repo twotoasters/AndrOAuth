@@ -19,6 +19,7 @@ public class OAuthRequest {
 	private Map<String, String> requestParams;
 	private Map<String, String> headersMap;
 	private static final String AUTHORIZATION = "Authorization";
+	private boolean shouldUseDefaultAuthorizationHeader = true;
 	protected static final String BEARER = "Bearer ";
 	protected static final String POST = "POST";
 	protected static final String GET = "GET";
@@ -154,6 +155,19 @@ public class OAuthRequest {
 		this.requestParams = requestParams;
 	}
 	
+	public boolean isShouldUseDefaultAuthorizationHeader() {
+		return shouldUseDefaultAuthorizationHeader;
+	}
+
+	/**
+	 * Sets whether to use the default Authorization header for access to protected resources
+	 * Default is true, set to false if the API follows different authorization process
+	 * @param shouldUseDefaultAuthorizationHeader
+	 */
+	public void setShouldUseDefaultAuthorizationHeader(boolean shouldUseDefaultAuthorizationHeader) {
+		this.shouldUseDefaultAuthorizationHeader = shouldUseDefaultAuthorizationHeader;
+	}
+	
 	/**
 	 * Attempts to refresh the access token if a request failed OAuth 2.0 only
 	 * @param method post or get
@@ -200,8 +214,9 @@ public class OAuthRequest {
 		request.setStreamingMode(HootRequest.STREAMING_MODE_FIXED);
 
 		Properties headers = new Properties();
-		headers.setProperty(AUTHORIZATION, authHeader);
-		
+		if(shouldUseDefaultAuthorizationHeader){
+			headers.setProperty(AUTHORIZATION, authHeader);
+		}
 		if(headersMap != null) {
 			for(Map.Entry<String, String> entry : headersMap.entrySet()) {
 				headers.setProperty(entry.getKey(), entry.getValue());
@@ -229,7 +244,7 @@ public class OAuthRequest {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
-				String errorResponse = extractErrorResponse(result.getResponseString());
+				
 				refreshAccessToken(method, result);
 			}
 
