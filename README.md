@@ -21,7 +21,7 @@ A simple OAuth library for Android based on <a href="https://github.com/twotoast
   <br><br>
   But basically, to get an access token:
   
-      service = OAuthService.newInstance(new GoogleApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
+      OAuth20Service service = OAuthService.newInstance(new GoogleApi(), APIKEY, APISECRET, new OAuth20ServiceCallback() {
       		
     			@Override
     			public void onOAuthAccessTokenReceived(OAuth20Token token) {
