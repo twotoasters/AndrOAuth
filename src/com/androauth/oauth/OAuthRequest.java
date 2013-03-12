@@ -16,7 +16,7 @@ import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
  */
 public class OAuthRequest {
 
-	protected static String requestUrl;
+	protected String requestUrl;
 	private Map<String, String> requestParams;
 	private Map<String, String> headersMap;
 	private static final String AUTHORIZATION = "Authorization";
@@ -24,7 +24,7 @@ public class OAuthRequest {
 	protected static final String BEARER = "Bearer ";
 	protected static final String POST = "POST";
 	protected static final String GET = "GET";
-	protected static OnRequestCompleteListener onRequestCompleteListener;
+	protected OnRequestCompleteListener onRequestCompleteListener;
 	
 	/**
 	 * An interface for notifying the caller when the hoot request completes
@@ -55,10 +55,10 @@ public class OAuthRequest {
 	 * @param onCompleteListner an interface to notify the caller when the request completes
 	 * @return an OAuth1.0 request
 	 */
-	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
-		onRequestCompleteListener = onCompleteListner;
-		requestUrl = oAuthRequestUrl;
-		return new OAuth10Request(token, service);	
+	public static OAuth10Request newInstance(String oAuthRequestUrl, OAuth10Token token, OAuth10Service service, OnRequestCompleteListener onCompleteListener){
+		OAuth10Request request = new OAuth10Request(token, service);
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
 	}
 	
 	/**
@@ -70,10 +70,10 @@ public class OAuthRequest {
 	 * @param onCompleteListner an interface to notify the caller when the request completes
 	 * @return an OAuth1.0 request
 	 */
-	public static OAuth10Request newInstance(String oAuthRequestUrl, String accessToken, String userSecret, OAuth10Service service, OnRequestCompleteListener onCompleteListner){
-		requestUrl = oAuthRequestUrl;
-		onRequestCompleteListener = onCompleteListner;
-		return new OAuth10Request(new OAuth10Token(accessToken, userSecret), service);
+	public static OAuth10Request newInstance(String oAuthRequestUrl, String accessToken, String userSecret, OAuth10Service service, OnRequestCompleteListener onCompleteListener){
+		OAuth10Request request = new OAuth10Request(new OAuth10Token(accessToken, userSecret), service);
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
 	}
 	
 	/**
@@ -83,10 +83,10 @@ public class OAuthRequest {
 	 * @param onCompleteListner an inteface to notify the caller when the request completes
 	 * @return an OAuth2.0 request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OnRequestCompleteListener onCompleteListner){
-		requestUrl = oAuthRequestUrl;
-		onRequestCompleteListener = onCompleteListner;
-		return new OAuth20Request(token);
+	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OnRequestCompleteListener onCompleteListener){
+		OAuth20Request request = new OAuth20Request(token);
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
 	}
 	
 	/**
@@ -97,10 +97,10 @@ public class OAuthRequest {
 	 * @param onCompleteListner an interface to notify the caller when the request completes
 	 * @return an OAuth2.0 request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
-		requestUrl = oAuthRequestUrl;
-		onRequestCompleteListener = onCompleteListner;
-		return new OAuth20Request(token, service);
+	public static OAuth20Request newInstance(String oAuthRequestUrl, OAuth20Token token, OAuth20Service service, OnRequestCompleteListener onCompleteListener){
+		OAuth20Request request = new OAuth20Request(token, service);
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
 	}
 	
 	/**
@@ -112,10 +112,10 @@ public class OAuthRequest {
 	 * @param onCompleteListner an interface to notify the caller when the request completes
 	 * @return an OAuth2.0 request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, String refreshToken, OAuth20Service service, OnRequestCompleteListener onCompleteListner){
-		requestUrl = oAuthRequestUrl;
-		onRequestCompleteListener = onCompleteListner;
-		return new OAuth20Request(new OAuth20Token(accessToken, refreshToken), service);
+	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, String refreshToken, OAuth20Service service, OnRequestCompleteListener onCompleteListener){
+		OAuth20Request request = new OAuth20Request(new OAuth20Token(accessToken, refreshToken), service); 
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
 	}
 	
 	/**
@@ -125,10 +125,15 @@ public class OAuthRequest {
 	 * @param onCompleteListner an interface to notify the caller when the request completes
 	 * @return an OAuth2.0 request
 	 */
-	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, OnRequestCompleteListener onCompleteListner){
-		requestUrl = oAuthRequestUrl;
-		onRequestCompleteListener = onCompleteListner;
-		return new OAuth20Request(new OAuth20Token(accessToken));
+	public static OAuth20Request newInstance(String oAuthRequestUrl, String accessToken, OnRequestCompleteListener onCompleteListener){
+		OAuth20Request request = new OAuth20Request(new OAuth20Token(accessToken));
+		request.setUrlAndListener(oAuthRequestUrl, onCompleteListener);
+		return request;
+	}
+	
+	protected void setUrlAndListener(String url, OnRequestCompleteListener onCompleteListener){
+		requestUrl = url;
+		onRequestCompleteListener = onCompleteListener;
 	}
 
 	/**
