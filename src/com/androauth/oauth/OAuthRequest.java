@@ -145,9 +145,11 @@ public class OAuthRequest {
 	 */
 	public Map<String,String> getPercentEncodedRequestParams(){
 		Map<String,String> percentEncodedParams = new HashMap<String,String>();
-		for (Map.Entry<String, String> entry : getRequestParams().entrySet())
-		{
-			percentEncodedParams.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
+		if(getRequestParams() != null && !getRequestParams().isEmpty()){
+			for (Map.Entry<String, String> entry : getRequestParams().entrySet())
+			{
+				percentEncodedParams.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
+			}
 		}
 		return percentEncodedParams;
 	}
