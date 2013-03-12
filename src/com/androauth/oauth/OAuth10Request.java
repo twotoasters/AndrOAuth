@@ -24,7 +24,7 @@ public class OAuth10Request extends OAuthRequest{
 	 * Builds a valid post request for OAuth10 
 	 * @param onRequestCompleteListener
 	 */
-	public void post(OnRequestCompleteListener onRequestCompleteListener) {
+	public void post() {
 		post(getAuthHeader(POST));
 	}
 	
@@ -32,7 +32,7 @@ public class OAuth10Request extends OAuthRequest{
 	 * Builds a valid get request for OAuth10
 	 * @param onRequestCompleteListener
 	 */
-	public void get(OnRequestCompleteListener onRequestCompleteListener){
+	public void get(){
 		get(getAuthHeader(GET));
 	}
 	
