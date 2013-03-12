@@ -230,10 +230,7 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_TOKEN, accessToken.getAccessToken());
 		
 		if(queryParameters!=null && !queryParameters.isEmpty()){
-			for (Map.Entry<String, String> entry : queryParameters.entrySet())
-			{
-			   headersMap.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
-			}
+			headersMap.putAll(queryParameters);
 		}
 		
 		return buildOAuthHeader(httpMethod, baseUrl, headersMap, accessToken.getUserSecret());

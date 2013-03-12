@@ -1,5 +1,6 @@
 package com.androauth.oauth;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -140,6 +141,18 @@ public class OAuthRequest {
 	}
 
 	/**
+	 * 
+	 */
+	public Map<String,String> getPercentEncodedRequestParams(){
+		Map<String,String> percentEncodedParams = new HashMap<String,String>();
+		for (Map.Entry<String, String> entry : getRequestParams().entrySet())
+		{
+			percentEncodedParams.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
+		}
+		return percentEncodedParams;
+	}
+	
+	/**
 	 * Gets request parameters for either post or get
 	 * @return request parameters
 	 */
@@ -194,8 +207,8 @@ public class OAuthRequest {
 	   */
 	protected void post(String authHeader) {
 		HootRequest request = execute(POST, authHeader);
-		if(getRequestParams() != null) {
-			request.post(getRequestParams()).execute();
+		if(getPercentEncodedRequestParams() != null) {
+			request.post(getPercentEncodedRequestParams()).execute();
 		} else {
 			request.post().execute();
 		}
@@ -223,8 +236,8 @@ public class OAuthRequest {
 			}
 		}
 		request.setHeaders(headers);
-		if(method.equals(GET) && getRequestParams() != null) {
-			request.setQueryParameters(getRequestParams());
+		if(method.equals(GET) && getPercentEncodedRequestParams() != null) {
+			request.setQueryParameters(getPercentEncodedRequestParams());
 		}
 
 		request.bindListener(new HootRequestListener() {
