@@ -3,7 +3,6 @@ package com.androauth.oauth;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import com.androauth.api.OAuth20Api;
 import com.androauth.oauth.OAuth20Request.OAuthRefreshTokenCallback;
 import com.twotoasters.android.hoot.Hoot;
@@ -132,6 +131,8 @@ public class OAuth20Service extends OAuthService {
 		queryParameters.put(CODE, code);
 		queryParameters.put(GRANT_TYPE, AUTHORIZATION_CODE);
 		queryParameters.put(REDIRECT_URI, getApiCallback());
+		queryParameters.put("client_id",getApiKey());
+		queryParameters.put("client_secret", getApiSecret());
 		
 
 		request.bindListener(new HootRequestListener() {
@@ -139,6 +140,9 @@ public class OAuth20Service extends OAuthService {
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
 				String accessToken = OAuthUtils.extract(result.getResponseString(), ACCESS_TOKEN_REGEX);
+				if(accessToken == null){
+					accessToken = OAuthUtils.extract(result.getResponseString(), ACCESS_TOKEN_RS_REGEX);
+				}
 				String refreshToken = OAuthUtils.extract(result.getResponseString(), REFRESH_TOKEN_REGEX);
 				OAuth20Token token = new OAuth20Token(accessToken, refreshToken);
 				oAuthCallback.onOAuthAccessTokenReceived(token);
