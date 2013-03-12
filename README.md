@@ -62,6 +62,9 @@ A simple OAuth library for Android based on <a href="https://github.com/twotoast
     		request.setRequestParams(queryParameters);
   
  That's it.
+
+##Other
+If you have any trouble configuring the library or adding an API, feel free to reach out: pat@twotoasters.com
   
 ##License
 
