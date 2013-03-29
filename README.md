@@ -6,7 +6,7 @@ A simple OAuth library for Android based on <a href="https://github.com/twotoast
 
 ##Installation
 
-  Download the <a href="http://linode-staging.twotoasters.com/androauth/downloads/">AndrOAuth.jar file</a><br>
+  Download the <a href="http://linode-staging.twotoasters.com/android/downloads/">AndrOAuth.jar file</a><br>
   <a href="https://github.com/twotoasters/AndrOAuth/wiki/Installation-Instructions">Detailed installation instructions</a><br>
 
 ##Implementation
