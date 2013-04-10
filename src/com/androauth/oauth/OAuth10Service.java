@@ -74,6 +74,26 @@ public class OAuth10Service extends OAuthService {
 		oAuthCallback = oAuth10Callback;
 		api = oAuth10Api;
 	}
+	
+	
+	/**
+	 * Gets the interface callback
+	 * @return
+	 */
+	public OAuth10ServiceCallback getoAuthCallback() {
+		return oAuthCallback;
+	}
+
+
+	/**
+	 * Sets an interface callback to tell when access and request tokens have been received
+	 * @param oAuthCallback
+	 */
+	public void setoAuthCallback(OAuth10ServiceCallback oAuthCallback) {
+		this.oAuthCallback = oAuthCallback;
+	}
+
+
 
 	/**
 	 * Builds an authorization header that conforms to the OAuth 1.0 spec
@@ -230,10 +250,7 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_TOKEN, accessToken.getAccessToken());
 		
 		if(queryParameters!=null && !queryParameters.isEmpty()){
-			for (Map.Entry<String, String> entry : queryParameters.entrySet())
-			{
-			   headersMap.put(entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
-			}
+			headersMap.putAll(queryParameters);
 		}
 		
 		return buildOAuthHeader(httpMethod, baseUrl, headersMap, accessToken.getUserSecret());
