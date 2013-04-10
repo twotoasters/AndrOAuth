@@ -42,7 +42,7 @@ public class OAuth10Request extends OAuthRequest{
 	 * @return valid header
 	 */
 	private String getAuthHeader(String method){
-		return service.signOAuthRequest(token, requestUrl, method, getRequestParams());
+		return service.signOAuthRequest(token, requestUrl, method, getPercentEncodedRequestParams());
 	}
 
 }
