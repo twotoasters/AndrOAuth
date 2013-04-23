@@ -1,5 +1,7 @@
 package com.androauth.api;
 
+import com.androauth.oauth.OAuthUtils.HttpMethod;
+
 /**
  * An interface for apis that conform to the OAuth 1.0 spec
  * @author pfives
@@ -31,5 +33,8 @@ public interface OAuth10Api {
 	 * @return the OAuth version
 	 */
 	public String getOauthVersion();
+	
+	public HttpMethod getHttpMethod();
+	
 	
 }
