@@ -1,5 +1,7 @@
 package com.androauth.api;
 
+import com.androauth.oauth.OAuthUtils.HttpMethod;
+
 /**
  * A class to use OAuth on the Twitter.com api
  * @author pfives
@@ -27,6 +29,10 @@ public class TwitterApi implements OAuth10Api{
 	@Override
 	public String getOauthVersion() {
 		return OAUTH_VERSION;
+	}
+	@Override
+	public HttpMethod getHttpMethod() {
+		return HttpMethod.POST;
 	}
 
 }
