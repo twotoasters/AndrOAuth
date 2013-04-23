@@ -1,5 +1,7 @@
 package com.androauth.api;
 
+import com.androauth.oauth.OAuthUtils;
+
 public class ReadabilityApi implements OAuth10Api {
 
     private static final String AUTHORIZE_URL = "https://www.readability.com/api/rest/v1/oauth/authorize";
@@ -25,5 +27,9 @@ public class ReadabilityApi implements OAuth10Api {
     @Override
     public String getOauthVersion() {
         return OAUTH_VERSION;
+    }
+
+    @Override public OAuthUtils.HttpMethod getHttpMethod() {
+        return OAuthUtils.HttpMethod.GET;
     }
 }
