@@ -70,4 +70,8 @@ public class OAuthUtils {
 		return s == null || s.length()==0;
 	}
 	
+	public enum HttpMethod{
+		GET, POST
+	}
+	
 }

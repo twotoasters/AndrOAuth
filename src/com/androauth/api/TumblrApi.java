@@ -1,5 +1,7 @@
 package com.androauth.api;
 
+import com.androauth.oauth.OAuthUtils.HttpMethod;
+
 public class TumblrApi implements OAuth10Api{
 
 	private static final String AUTHORIZE_URL = "http://www.tumblr.com/oauth/authorize";
@@ -25,6 +27,11 @@ public class TumblrApi implements OAuth10Api{
 	@Override
 	public String getOauthVersion() {
 		return OAUTH_VERSION;
+	}
+
+	@Override
+	public HttpMethod getHttpMethod() {
+		return HttpMethod.POST;
 	}
 
 }

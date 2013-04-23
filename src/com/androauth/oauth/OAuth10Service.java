@@ -18,6 +18,7 @@ import com.androauth.api.OAuth10Api;
 import com.androauth.exceptions.OAuthEncodingException;
 import com.androauth.exceptions.OAuthKeyException;
 import com.androauth.exceptions.OAuthSignatureException;
+import com.androauth.oauth.OAuthUtils.HttpMethod;
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
 import com.twotoasters.android.hoot.HootResult;
@@ -280,7 +281,10 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_VERIFIER, verifier);
 
 		setApiCallback(null);
-		String header = buildOAuthHeader(POST, api.getAccessTokenResource(), headersMap, getToken().getUserSecret());
+		
+		HttpMethod method = (api.getHttpMethod() == null) ? HttpMethod.POST : api.getHttpMethod();
+		
+		String header = buildOAuthHeader(method.toString(), api.getAccessTokenResource(), headersMap, getToken().getUserSecret());
 		
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
@@ -318,8 +322,12 @@ public class OAuth10Service extends OAuthService {
 
 			}
 		});
-
-		oAuthRequest.post().execute();
+		
+		if(method == HttpMethod.POST){
+			oAuthRequest.post().execute();
+		}else{
+			oAuthRequest.get().execute();
+		}
 	}
 
 	/**
@@ -354,10 +362,10 @@ public class OAuth10Service extends OAuthService {
 	 */
 	public void getOAuthRequestToken() {
 		Hoot hoot = Hoot.createInstanceWithBaseUrl(api.getRequestTokenResource());
-		String header = buildOAuthHeader(POST, api.getRequestTokenResource(), null, null);
+		HttpMethod method = (api.getHttpMethod() == null) ? HttpMethod.POST : api.getHttpMethod();
+		String header = buildOAuthHeader(method.toString(), api.getRequestTokenResource(), null, null);
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
-
 		HootRequest oAuthRequest = hoot.createRequest().setHeaders(headers);
 
 		oAuthRequest.bindListener(new HootRequestListener() {
@@ -390,7 +398,11 @@ public class OAuth10Service extends OAuthService {
 			public void onCancelled(HootRequest request) {
 			}
 		});
-		oAuthRequest.post().execute();
+		if(method == HttpMethod.POST){
+			oAuthRequest.post().execute();
+		}else{
+			oAuthRequest.get().execute();
+		}
 	}
 	
 	private String extractAccessToken(String response){
