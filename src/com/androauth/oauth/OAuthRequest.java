@@ -6,8 +6,8 @@ import java.util.Properties;
 
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
-import com.twotoasters.android.hoot.HootResult;
 import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
+import com.twotoasters.android.hoot.HootResult;
 
 /**
  * 
@@ -244,7 +244,7 @@ public class OAuthRequest {
 		}
 		request.setHeaders(headers);
 		if(method.equals(GET) && getPercentEncodedRequestParams() != null) {
-			request.setQueryParameters(getPercentEncodedRequestParams());
+			request.setQueryParameters(getRequestParams());
 		}
 
 		request.bindListener(new HootRequestListener() {
