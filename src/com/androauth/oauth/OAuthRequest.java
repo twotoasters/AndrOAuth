@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.entity.mime.MultipartEntity;
+
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
 import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
@@ -18,6 +20,7 @@ public class OAuthRequest {
 
 	protected String requestUrl;
 	private Map<String, String> requestParams;
+	private MultipartEntity multipartEntity;
 	private Map<String, String> headersMap;
 	private static final String AUTHORIZATION = "Authorization";
 	private boolean shouldUseDefaultAuthorizationHeader = true;
@@ -175,6 +178,22 @@ public class OAuthRequest {
 		this.requestParams = requestParams;
 	}
 	
+	/**
+	 * Gets MultipartEntity for a post 
+	 * @return previously set MultipartEntity
+	 */
+	public MultipartEntity getMultipartEntity() {
+		return multipartEntity;
+	}
+	
+	/**
+	 * Sets the MultipartEntity for a post
+	 * @param multipartEntity
+	 */
+	public void setMultipartEntity(MultipartEntity multipartEntity) {
+		this.multipartEntity = multipartEntity;
+	}
+	
 	public boolean isShouldUseDefaultAuthorizationHeader() {
 		return shouldUseDefaultAuthorizationHeader;
 	}
@@ -214,7 +233,10 @@ public class OAuthRequest {
 	   */
 	protected void post(String authHeader) {
 		HootRequest request = execute(POST, authHeader);
-		if(getPercentEncodedRequestParams() != null) {
+		
+		if(getMultipartEntity() != null){
+			request.post(getMultipartEntity()).execute();
+		} else if(getPercentEncodedRequestParams() != null) {
 			request.post(getPercentEncodedRequestParams()).execute();
 		} else {
 			request.post().execute();
@@ -243,7 +265,7 @@ public class OAuthRequest {
 			}
 		}
 		request.setHeaders(headers);
-		if(method.equals(GET) && getPercentEncodedRequestParams() != null) {
+		if(method.equals(GET) && getRequestParams() != null) {
 			request.setQueryParameters(getRequestParams());
 		}
 
