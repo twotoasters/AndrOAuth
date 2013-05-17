@@ -21,46 +21,55 @@ import com.androauth.exceptions.OAuthSignatureException;
 import com.androauth.oauth.OAuthUtils.HttpMethod;
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
-import com.twotoasters.android.hoot.HootResult;
 import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
-
+import com.twotoasters.android.hoot.HootResult;
 
 /**
  * 
  * OAuth service class for apis that conform to the OAuth 1.0 spec
+ * 
  * @author pfives
  */
 public class OAuth10Service extends OAuthService {
-	
+
 	/**
-	 * An interface for notifying the caller when a request_token or access_token has been received 
-	 *
+	 * An interface for notifying the caller when a request_token or
+	 * access_token has been received
+	 * 
 	 */
-	public interface OAuth10ServiceCallback{
+	public interface OAuth10ServiceCallback {
 		/**
 		 * Notifies when an oauth request token has been received
 		 */
 		public void onOAuthRequestTokenReceived();
+
 		/**
 		 * Notifies when a request token request has failed
+		 * 
 		 * @param result
 		 */
 		public void onOAuthRequestTokenFailed(HootResult result);
+
 		/**
 		 * Notifies when an oauth access token has been received
-		 * @param token and OAuth10 token containing an access token and user secret
+		 * 
+		 * @param token
+		 *            and OAuth10 token containing an access token and user
+		 *            secret
 		 */
 		public void onOAuthAccessTokenReceived(OAuth10Token token);
+
 		/**
 		 * Notifies when an access token request has failed
+		 * 
 		 * @param result
 		 */
 		public void onOAuthAccessTokenFailed(HootResult result);
 	}
-	
+
 	private OAuth10Api api;
 	private OAuth10ServiceCallback oAuthCallback;
-	
+
 	public static final String AUTHORIZATION = "Authorization";
 	public static final String OAUTH_ = "OAuth ";
 	public static final String OAUTH_VERIFIER = "oauth_verifier";
@@ -75,26 +84,25 @@ public class OAuth10Service extends OAuthService {
 		oAuthCallback = oAuth10Callback;
 		api = oAuth10Api;
 	}
-	
-	
+
 	/**
 	 * Gets the interface callback
+	 * 
 	 * @return
 	 */
 	public OAuth10ServiceCallback getoAuthCallback() {
 		return oAuthCallback;
 	}
 
-
 	/**
-	 * Sets an interface callback to tell when access and request tokens have been received
+	 * Sets an interface callback to tell when access and request tokens have
+	 * been received
+	 * 
 	 * @param oAuthCallback
 	 */
 	public void setoAuthCallback(OAuth10ServiceCallback oAuthCallback) {
 		this.oAuthCallback = oAuthCallback;
 	}
-
-
 
 	/**
 	 * Builds an authorization header that conforms to the OAuth 1.0 spec
@@ -117,14 +125,11 @@ public class OAuth10Service extends OAuthService {
 		boolean appendEntry = false;
 		StringBuilder sb = new StringBuilder(OAUTH_);
 		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
-			if (appendEntry) {
+			if(appendEntry) {
 				sb.append(", ");
 			}
 			// key = "value"
-			sb.append(entry.getKey())
-				.append("=\"")
-				.append(entry.getValue())
-				.append("\"");
+			sb.append(entry.getKey()).append("=\"").append(entry.getValue()).append("\"");
 			appendEntry = true;
 		}
 
@@ -133,10 +138,16 @@ public class OAuth10Service extends OAuthService {
 
 	/**
 	 * Builds a map of headers used on OAuth1.0 request
-	 * @param headers any additional headers
-	 * @param httpMethod post or get
-	 * @param url the url the request will be made on 
-	 * @param secret the user secret provided by the api after getting a request token
+	 * 
+	 * @param headers
+	 *            any additional headers
+	 * @param httpMethod
+	 *            post or get
+	 * @param url
+	 *            the url the request will be made on
+	 * @param secret
+	 *            the user secret provided by the api after getting a request
+	 *            token
 	 * @return a sorted map of headers
 	 */
 	private Map<String, String> buildAuthorizationHeaderMap(Map<String, String> headers, String httpMethod, String url, String secret) {
@@ -151,7 +162,7 @@ public class OAuth10Service extends OAuthService {
 			headersMap.put(OAUTH_CALLBACK, OAuthUtils.percentEncode(getApiCallback()));
 		}
 		headersMap.put(OAUTH_CONSUMER_KEY, getApiKey());
-		headersMap.put(OAUTH_NONCE, String.valueOf((millis*1000) + new Random().nextInt()));
+		headersMap.put(OAUTH_NONCE, String.valueOf((millis * 1000) + new Random().nextInt()));
 		headersMap.put(OAUTH_SIGNATURE_METHOD, METHOD);
 		headersMap.put(OAUTH_TIMESTAMP, String.valueOf(millis));
 		headersMap.put(OAUTH_VERSION, api.getOauthVersion());
@@ -175,10 +186,10 @@ public class OAuth10Service extends OAuthService {
 	 * @return a valid OAuth signature
 	 * @throws UnsupportedEncodingException
 	 */
-	private String createSignature(Map<String, String> headersMap, String userSecret, String methodType, String baseUrl){
+	private String createSignature(Map<String, String> headersMap, String userSecret, String methodType, String baseUrl) {
 
 		StringBuilder parameterString = new StringBuilder();
-		
+
 		boolean appendParameter = false;
 		for(Map.Entry<String, String> entry : headersMap.entrySet()) {
 			if(appendParameter) {
@@ -189,74 +200,84 @@ public class OAuth10Service extends OAuthService {
 		}
 
 		StringBuilder signatureBaseString = new StringBuilder();
-		signatureBaseString.append(methodType).append("&").append(OAuthUtils.percentEncode(baseUrl)).append("&").append(OAuthUtils.percentEncode(parameterString.toString()));
-		
+		signatureBaseString.append(methodType).append("&").append(OAuthUtils.percentEncode(baseUrl)).append("&")
+				.append(OAuthUtils.percentEncode(parameterString.toString()));
+
 		String signingKey = getApiSecret() + "&" + (userSecret == null ? "" : userSecret);
 
 		return createHMACSignature(signatureBaseString.toString(), signingKey);
 
 	}
-	
+
 	/**
-	   * Generates an HMAC signature given a base string and key
-	   * 
-	   * @param baseString to be turned into oauth signature
-	   * @param signingKey used to sign the baseString (consumersecret& or consumersecret&clientsecret)
-	   * 
-	   * @return the signature used in the oauth header
-	   */
+	 * Generates an HMAC signature given a base string and key
+	 * 
+	 * @param baseString
+	 *            to be turned into oauth signature
+	 * @param signingKey
+	 *            used to sign the baseString (consumersecret& or
+	 *            consumersecret&clientsecret)
+	 * 
+	 * @return the signature used in the oauth header
+	 */
 	public String createHMACSignature(String baseString, String signingKey) {
 		SecretKeySpec key = null;
 		try {
 			key = new SecretKeySpec(signingKey.getBytes(UTF8), HMAC_SHA1);
 		} catch (UnsupportedEncodingException e) {
-			throw(new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
+			throw (new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
 		}
-	    Mac mac = null;
+		Mac mac = null;
 		try {
 			mac = Mac.getInstance(HMAC_SHA1);
 		} catch (NoSuchAlgorithmException e) {
-			throw(new OAuthSignatureException("Error creating signature: No Algorithm HMAC-SHA1", e));
+			throw (new OAuthSignatureException("Error creating signature: No Algorithm HMAC-SHA1", e));
 		}
-	    try {
+		try {
 			mac.init(key);
 		} catch (InvalidKeyException e) {
 			throw new OAuthKeyException("Error creating signature: Invalid Key", e);
 		}
-	    byte[] bytes = null;
+		byte[] bytes = null;
 		try {
 			bytes = mac.doFinal(baseString.getBytes(UTF8));
 		} catch (IllegalStateException e) {
-			throw(new OAuthSignatureException("Error creating signature: Illegal State", e));
+			throw (new OAuthSignatureException("Error creating signature: Illegal State", e));
 		} catch (UnsupportedEncodingException e) {
-			throw(new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
+			throw (new OAuthEncodingException("Error creating signature: Unsupported Encoding UTF-8", e));
 		}
-	    String sig = new String(Base64.encodeToString(bytes, 0, bytes.length, Base64.DEFAULT)).trim();
-	    
-	    return OAuthUtils.percentEncode(sig);
+		String sig = new String(Base64.encodeToString(bytes, 0, bytes.length, Base64.DEFAULT)).trim();
+
+		return OAuthUtils.percentEncode(sig);
 	}
 
 	/**
-	 * Signs an OAuthRequest by building an Authorization header using additional parameters
-	 * @param accessToken the accessToken received from the api by the access token url
-	 * @param baseUrl the url that the request will be made on
-	 * @param httpMethod a post or a get
-	 * @param queryParameters additional parameters required on the request
+	 * Signs an OAuthRequest by building an Authorization header using
+	 * additional parameters
+	 * 
+	 * @param accessToken
+	 *            the accessToken received from the api by the access token url
+	 * @param baseUrl
+	 *            the url that the request will be made on
+	 * @param httpMethod
+	 *            a post or a get
+	 * @param queryParameters
+	 *            additional parameters required on the request
 	 * @return a valid Authorization header
 	 */
-	public String signOAuthRequest(OAuth10Token accessToken, String baseUrl, String httpMethod, Map<String,String> queryParameters) {
-		
+	public String signOAuthRequest(OAuth10Token accessToken, String baseUrl, String httpMethod, Map<String, String> queryParameters) {
+
 		Map<String, String> headersMap = new TreeMap<String, String>();
-		
+
 		headersMap.put(OAUTH_TOKEN, accessToken.getAccessToken());
-		
-		if(queryParameters!=null && !queryParameters.isEmpty()){
+
+		if(queryParameters != null && !queryParameters.isEmpty()) {
 			headersMap.putAll(queryParameters);
 		}
-		
+
 		return buildOAuthHeader(httpMethod, baseUrl, headersMap, accessToken.getUserSecret());
 	}
-	
+
 	/**
 	 * Gets an access token for the api (final step OAuth 1.0) This method is
 	 * called after the user verifies access and is redirected
@@ -269,8 +290,14 @@ public class OAuth10Service extends OAuthService {
 	 *            the request token endpoint
 	 * @param oAuthAccessTokenCallback
 	 *            interface used to notify when access token is received
+	 * 
+	 * @return true if the url contains an OAuth Verifier. Will return false if
+	 *         the request was denied.
 	 */
-	public void getOAuthAccessToken(String url) {
+	public boolean getOAuthAccessToken(String url) {
+		if(url.contains("denied")) {
+			return false;
+		}
 
 		Uri uri = Uri.parse(url);
 		String verifier = uri.getQueryParameter(OAUTH_VERIFIER).trim();
@@ -281,11 +308,11 @@ public class OAuth10Service extends OAuthService {
 		headersMap.put(OAUTH_VERIFIER, verifier);
 
 		setApiCallback(null);
-		
+
 		HttpMethod method = (api.getHttpMethod() == null) ? HttpMethod.POST : api.getHttpMethod();
-		
+
 		String header = buildOAuthHeader(method.toString(), api.getAccessTokenResource(), headersMap, getToken().getUserSecret());
-		
+
 		Properties headers = new Properties();
 		headers.put(AUTHORIZATION, header);
 
@@ -322,38 +349,44 @@ public class OAuth10Service extends OAuthService {
 
 			}
 		});
-		
-		if(method == HttpMethod.POST){
+
+		if(method == HttpMethod.POST) {
 			oAuthRequest.post().execute();
-		}else{
+		} else {
 			oAuthRequest.get().execute();
 		}
+		return true;
 	}
 
 	/**
-	 * Constructs an authorize url which appends the oauth_token and oauth_callback AND any additional parameters passed in to the authorize url defined in the api class
+	 * Constructs an authorize url which appends the oauth_token and
+	 * oauth_callback AND any additional parameters passed in to the authorize
+	 * url defined in the api class
+	 * 
 	 * @param additionalAuthorizeParams
 	 * @return
 	 */
-	public String getAuthorizeUrl(Map<String,String>additionalAuthorizeParams){
+	public String getAuthorizeUrl(Map<String, String> additionalAuthorizeParams) {
 		StringBuilder url = new StringBuilder(getAuthorizeUrl());
-		for(Map.Entry<String, String> entry : additionalAuthorizeParams.entrySet()){
+		for(Map.Entry<String, String> entry : additionalAuthorizeParams.entrySet()) {
 			OAuthUtils.appendQueryParam(url, entry.getKey(), OAuthUtils.percentEncode(entry.getValue()));
 		}
 		return url.toString();
 	}
-	
+
 	/**
-	 * Constructs an authorize url which appends the oauth_token and oauth_callback to the authorize url defined in the api class
+	 * Constructs an authorize url which appends the oauth_token and
+	 * oauth_callback to the authorize url defined in the api class
+	 * 
 	 * @return authorize url with parameters
 	 */
-	public String getAuthorizeUrl(){
+	public String getAuthorizeUrl() {
 		StringBuilder url = new StringBuilder(api.getAuthorizeUrl());
 		OAuthUtils.appendFirstQueryParam(url, OAUTH_TOKEN, getToken().getAccessToken());
 		OAuthUtils.appendQueryParam(url, OAUTH_CALLBACK, OAuthUtils.percentEncode(getApiCallback()));
 		return url.toString();
 	}
-	
+
 	/**
 	 * Gets a request token from the api (first step OAuth 1.0)
 	 * 
@@ -398,26 +431,26 @@ public class OAuth10Service extends OAuthService {
 			public void onCancelled(HootRequest request) {
 			}
 		});
-		if(method == HttpMethod.POST){
+		if(method == HttpMethod.POST) {
 			oAuthRequest.post().execute();
-		}else{
+		} else {
 			oAuthRequest.get().execute();
 		}
 	}
-	
-	private String extractAccessToken(String response){
+
+	private String extractAccessToken(String response) {
 		return OAuthUtils.extract(response, TOKEN_REGEX);
 	}
-	
-	private String extractUserSecret(String response){
+
+	private String extractUserSecret(String response) {
 		return OAuthUtils.extract(response, SECRET_REGEX);
 	}
-	
+
 	/**
 	 * Starts the OAuth10 handshake by requesting a request token
 	 */
-	public void start(){
+	public void start() {
 		getOAuthRequestToken();
 	}
-	
+
 }
