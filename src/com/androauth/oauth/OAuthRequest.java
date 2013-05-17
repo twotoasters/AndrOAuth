@@ -28,6 +28,7 @@ public class OAuthRequest {
 	protected static final String POST = "POST";
 	protected static final String GET = "GET";
 	protected OnRequestCompleteListener onRequestCompleteListener;
+	protected HootRequest hootRequest;
 	
 	/**
 	 * An interface for notifying the caller when the hoot request completes
@@ -215,6 +216,18 @@ public class OAuthRequest {
 	public void refreshAccessToken(String method, HootResult result){
 		onRequestCompleteListener.onFailure(result);
 	}
+	
+	/**
+	 * Attempts to cancel the request after it has been made.
+	 * @return true if the request is found and canceled. Returns false if the request cannot be found.
+	 */
+	public boolean cancel() {
+		if (hootRequest != null) {
+			hootRequest.cancel();
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	   * Starts a Hoot Get
@@ -274,6 +287,7 @@ public class OAuthRequest {
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
 				onRequestCompleteListener.onSuccess(result);
+				hootRequest = null;
 			}
 
 			@Override
@@ -286,6 +300,7 @@ public class OAuthRequest {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
+				hootRequest = null;
 				
 				refreshAccessToken(method, result);
 			}
@@ -294,6 +309,8 @@ public class OAuthRequest {
 			public void onCancelled(HootRequest request) {
 			}
 		});
+		
+		hootRequest = request;
 		
 		return request;
 	}
