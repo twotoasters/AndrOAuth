@@ -4,10 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.entity.mime.MultipartEntity;
+
 import com.twotoasters.android.hoot.Hoot;
 import com.twotoasters.android.hoot.HootRequest;
-import com.twotoasters.android.hoot.HootResult;
 import com.twotoasters.android.hoot.HootRequest.HootRequestListener;
+import com.twotoasters.android.hoot.HootResult;
 
 /**
  * 
@@ -18,6 +20,7 @@ public class OAuthRequest {
 
 	protected String requestUrl;
 	private Map<String, String> requestParams;
+	private MultipartEntity multipartEntity;
 	private Map<String, String> headersMap;
 	private static final String AUTHORIZATION = "Authorization";
 	private boolean shouldUseDefaultAuthorizationHeader = true;
@@ -25,6 +28,7 @@ public class OAuthRequest {
 	protected static final String POST = "POST";
 	protected static final String GET = "GET";
 	protected OnRequestCompleteListener onRequestCompleteListener;
+	protected HootRequest hootRequest;
 	
 	/**
 	 * An interface for notifying the caller when the hoot request completes
@@ -175,6 +179,22 @@ public class OAuthRequest {
 		this.requestParams = requestParams;
 	}
 	
+	/**
+	 * Gets MultipartEntity for a post 
+	 * @return previously set MultipartEntity
+	 */
+	public MultipartEntity getMultipartEntity() {
+		return multipartEntity;
+	}
+	
+	/**
+	 * Sets the MultipartEntity for a post
+	 * @param multipartEntity
+	 */
+	public void setMultipartEntity(MultipartEntity multipartEntity) {
+		this.multipartEntity = multipartEntity;
+	}
+	
 	public boolean isShouldUseDefaultAuthorizationHeader() {
 		return shouldUseDefaultAuthorizationHeader;
 	}
@@ -196,6 +216,18 @@ public class OAuthRequest {
 	public void refreshAccessToken(String method, HootResult result){
 		onRequestCompleteListener.onFailure(result);
 	}
+	
+	/**
+	 * Attempts to cancel the request after it has been made.
+	 * @return true if the request is found and canceled. Returns false if the request cannot be found.
+	 */
+	public boolean cancel() {
+		if (hootRequest != null) {
+			hootRequest.cancel();
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	   * Starts a Hoot Get
@@ -214,7 +246,10 @@ public class OAuthRequest {
 	   */
 	protected void post(String authHeader) {
 		HootRequest request = execute(POST, authHeader);
-		if(getPercentEncodedRequestParams() != null) {
+		
+		if(getMultipartEntity() != null){
+			request.post(getMultipartEntity()).execute();
+		} else if(getPercentEncodedRequestParams() != null) {
 			request.post(getPercentEncodedRequestParams()).execute();
 		} else {
 			request.post().execute();
@@ -243,8 +278,8 @@ public class OAuthRequest {
 			}
 		}
 		request.setHeaders(headers);
-		if(method.equals(GET) && getPercentEncodedRequestParams() != null) {
-			request.setQueryParameters(getPercentEncodedRequestParams());
+		if(method.equals(GET) && getRequestParams() != null) {
+			request.setQueryParameters(getRequestParams());
 		}
 
 		request.bindListener(new HootRequestListener() {
@@ -252,6 +287,7 @@ public class OAuthRequest {
 			@Override
 			public void onSuccess(HootRequest request, HootResult result) {
 				onRequestCompleteListener.onSuccess(result);
+				hootRequest = null;
 			}
 
 			@Override
@@ -264,6 +300,7 @@ public class OAuthRequest {
 
 			@Override
 			public void onFailure(HootRequest request, HootResult result) {
+				hootRequest = null;
 				
 				refreshAccessToken(method, result);
 			}
@@ -272,6 +309,8 @@ public class OAuthRequest {
 			public void onCancelled(HootRequest request) {
 			}
 		});
+		
+		hootRequest = request;
 		
 		return request;
 	}
