@@ -1,3 +1,5 @@
+***NOTE: This library is deprecated. You should probably find a better solution.***
+
 AndrOAuth
 =========
 
